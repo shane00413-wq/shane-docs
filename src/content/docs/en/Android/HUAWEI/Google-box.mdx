@@ -1,0 +1,49 @@
+---
+title: "Running Google Apps on Huawei Devices via a Virtual Sandbox"
+description: "How to run Google apps on Huawei Android devices using a virtual sandbox."
+sidebar:
+  order: 2
+---
+import { LinkCard } from '@astrojs/starlight/components';
+
+This guide is mainly for Huawei devices running Android (e.g. HarmonyOS 4.2). HarmonyOS NEXT can also use some virtual-sandbox solutions, but that's not covered in detail here.
+
+There are generally two ways to get Google services on a Huawei device:
+
+- **Virtual sandbox**: run Google apps inside a virtual environment
+- **microG**: replace part of Google's services with microG, paired with Aurora Store for downloading apps
+
+This guide covers the first approach.
+
+## Choosing a virtual sandbox
+
+The two common virtual-sandbox options for Google services on Huawei devices are GBox and Google Space (GSpace) — both are fairly popular. GSpace shows a lot of ads, so it's not recommended.
+
+## Installation
+
+Using GBox as an example: if you switch your Huawei AppGallery region to an overseas region (e.g. Hong Kong), you can download GBox directly.
+
+If you can't switch your Huawei account's region, download the installer from GBox's official site instead:
+[GBox official site](https://gboxlab.com/i18n/zh-Hant/)
+
+The same applies to GSpace — if you can't switch regions, download it from the [GSpace official site](https://gspaceteam.com/).
+
+Once installed, opening GBox shows the Play Store already pre-installed. Open the Play Store and sign in with your Google account.
+
+After signing in, you can install whatever apps you need. Installed apps are added to GBox's home screen automatically (they aren't installed onto your device's system) — you can create a desktop shortcut for quick access into GBox.
+
+## Summary
+
+The advantage of a virtual sandbox is that it's simple and beginner-friendly. The downside is that running Google services inside a virtual environment adds more performance overhead, background execution may be restricted by the system, notifications can be delayed, and it can't fully replace system-level Google services.
+
+You may have also noticed "microG service" mentioned during Google sign-in — that's because GBox uses microG internally too, just running inside a virtual environment, which costs more performance and is somewhat less stable than installing it directly on the system.
+
+So if you plan to use Google services long-term rather than just occasionally, I'd recommend installing microG directly on your system instead.
+
+microG install guide:
+
+<LinkCard
+  title="Using microG to Replace the Google Services Framework on Huawei Devices"
+  href="/en/Android/HUAWEI/microg/"
+  description="Replace some Google services with microG and use Google apps via Aurora Store"
+/>

@@ -1,0 +1,106 @@
+---
+title: "shane-new-doc Guide"
+description: "Scaffold new docs for Astro Starlight sites: interactive and command mode."
+sidebar:
+  order: 5
+---
+import { Tabs, TabItem, Card, CardGrid, Aside, Badge, FileTree } from '@astrojs/starlight/components';
+
+Once `shane-new-doc` is installed (see [Install & Quick Start](/en/cli/install/)), it drops a `scripts/new-doc.js` into the project. There are two ways to run it. If `pnpm new-doc` says the script doesn't exist, see [Verify the install](/en/cli/install/#verify-the-install) — the short version is that some package managers skip the setup step, and [Installation Internals](/en/cli/internals/) explains exactly why and how to finish it by hand.
+
+<Aside type="caution" title="Not the same as this site's own new-doc.js">
+This page covers the **published npm package**, whose command arguments use `/`-separated `key:value` pairs (e.g. `title:xxx`). This docs site's own hand-written script uses a `--dir --file --title` style instead — the two aren't interchangeable.
+</Aside>
+
+## Interactive mode
+
+Run it with no arguments:
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm" icon="npm">
+		```bash
+		npm run new-doc
+		```
+	</TabItem>
+	<TabItem label="pnpm" icon="pnpm">
+		```bash
+		pnpm new-doc
+		```
+	</TabItem>
+</Tabs>
+
+You'll be walked through, in order:
+
+<CardGrid>
+	<Card title="Directory" icon="open-book"><Badge text="Required" variant="danger" size="small" /> Relative to `src/content/docs/`. Re-asked if left blank.</Card>
+	<Card title="Filename" icon="document"><Badge text="Required" variant="danger" size="small" /> Checked for invalid characters immediately; a bad entry re-prompts.</Card>
+	<Card title="Title / description" icon="pencil"><Badge text="Optional" variant="success" size="small" /> Press enter to skip either one.</Card>
+	<Card title="Sidebar order" icon="list-format"><Badge text="Optional" variant="success" size="small" /> Maps to frontmatter's `sidebar.order`. Must be numeric or left blank — a non-numeric entry re-prompts.</Card>
+</CardGrid>
+
+If title is left blank, it defaults to the filename with its extension stripped.
+
+## Command mode
+
+The **first two positional arguments must be directory and filename, in exactly that order** — this pair is the one part of the command that can't be reshuffled. Everything after them is a `key:value` pair, and those pairs — unlike the two positionals before them — can appear in **any order**, separated by `/` (or split across lines with a trailing `\`):
+
+```bash
+pnpm new-doc "guide" "getting-started" title:Getting Started/description:Intro to the project/order:1/mdx:T
+```
+
+This is exactly equivalent — same keys, different order:
+
+```bash
+pnpm new-doc "guide" "getting-started" \
+  mdx:T \
+  order:1 \
+  title:Getting Started \
+  description:Intro to the project
+```
+
+### Argument reference
+
+| Key | Alias | Required | Description |
+|---|---|---|---|
+| `directory` | `dir` | <Badge text="Yes" variant="danger" size="small" /> | Positional #1, relative to `src/content/docs/`. |
+| `filename` | — | <Badge text="Yes" variant="danger" size="small" /> | Positional #2. |
+| `title` | — | <Badge text="No" variant="success" size="small" /> | Doc title. Defaults to the filename (extension stripped) if omitted. |
+| `description` | `desc` | <Badge text="No" variant="success" size="small" /> | Doc description. Omitted from frontmatter entirely if empty. |
+| `order` | `sidebarorder` | <Badge text="No" variant="success" size="small" /> | Sidebar order. Must be a number if provided at all — an invalid value throws an error and stops the command. |
+| `mdx` | — | <Badge text="No" variant="success" size="small" /> | Boolean, see below. `T`/`true` creates a `.mdx` file; otherwise `.md`. |
+
+**Boolean values** (`mdx`) follow the same rule as `shane-new-post`: case-insensitive, and only `t` / `true` (any casing) is read as *yes*. `f`, `false`, an empty value, or omitting the key are all read as *no* — there's no separate check for "false", it's simply everything that isn't a "true" match.
+
+<Aside type="tip" title="`dir` as a key:value pair, not just a positional">
+`directory` also has a `dir` alias usable as a trailing `key:value` pair, in addition to being the required first positional. In practice the positional form (`pnpm new-doc "guide" "getting-started" ...`) is what you'll use — the alias mainly exists for consistency with the other keys, and if both are supplied the trailing `dir:` value takes precedence over the positional.
+</Aside>
+
+<Aside type="note" title="Config file">
+The image folder chosen during setup (default `public/img`) is saved to `.shane-new-doc.json`, along with the chosen `lang`. **The docs directory root itself is not configurable** — Starlight's `docsLoader()` always reads from `src/content/docs/`, so changing it would have no effect and would just make generated docs land somewhere Starlight never renders. That's why this option doesn't exist; only the sub-directory *inside* `src/content/docs/` is something you choose, via the `directory` argument.
+</Aside>
+
+## What gets created
+
+<FileTree>
+- src/
+  - content/
+    - docs/
+      - guide/
+        - **getting-started.md** new doc, sidebar order 1
+- public/
+  - img/
+    - guide/
+      - **getting-started/** matching image folder, empty
+</FileTree>
+
+## Other behavior
+
+- Only generates/manages the script in projects that have `@astrojs/starlight` as a dependency, so it never touches unrelated projects.
+- **Never overwrites** a same-named file — it auto-increments the filename instead, e.g. `getting-started(2).md`, and prints a notice when it does.
+- Automatically creates a matching image folder (mirroring the doc's sub-directory) for every new doc.
+- Supports both `.md` and `.mdx`; if the filename already ends in one of those, it's used as-is and a notice is printed that the `mdx` flag was ignored.
+- Refuses any directory/filename that would resolve outside `src/content/docs/` (e.g. via `..`), even if the invalid characters check is somehow bypassed.
+
+<Aside type="caution" title="Don't run create-shane-new-doc directly once the package is already installed">
+`shane-new-doc` also registers a local `create-shane-new-doc` binary that's *not* the same as the standalone `create-shane-new-doc` package — running it directly (e.g. via `npx create-shane-new-doc` after installing) only touches `.shane-new-doc.json` and will **not** generate `scripts/new-doc.js`. Always use `npm create shane-new-doc@latest` for setup. Full explanation in [Installation Internals](/en/cli/internals/#a-naming-collision-worth-knowing-about).
+</Aside>

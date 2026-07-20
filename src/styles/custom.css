@@ -1,0 +1,144 @@
+/* =====================
+   字体
+===================== */
+
+:root {
+  --sl-font-system: Inter, "Noto Sans SC", system-ui, sans-serif;
+}
+
+
+/* =====================
+   黑白灰主题变量
+===================== */
+
+/* 浅色模式 */
+
+:root {
+  --sl-color-accent-low: #eeeeee;
+  --sl-color-accent: #404040;
+  --sl-color-accent-high: #171717;
+
+  --sl-color-bg: #ffffff;
+  --sidebar-bg: #f5f5f5;
+
+  --border-color: #e5e5e5;
+  --text-color: #404040;
+  --title-color: #171717;
+  --hover-bg: #eaeaea;
+}
+
+
+/* 深色模式 */
+
+[data-theme="dark"] {
+  --sl-color-accent-low: #2a2a2a;
+  --sl-color-accent: #d4d4d4;
+  --sl-color-accent-high: #ffffff;
+
+  --sl-color-bg: #121212;
+  --sidebar-bg: #161616;
+
+  --border-color: #292929;
+  --text-color: #d4d4d4;
+  --title-color: #ffffff;
+  --hover-bg: #222222;
+}
+
+
+/* =====================
+   页面背景
+===================== */
+
+body {
+  background: var(--sl-color-bg);
+}
+
+
+/* =====================
+   侧边栏背景
+===================== */
+
+.sidebar-content {
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
+}
+
+
+/* =====================
+   左上角标题
+===================== */
+
+.site-title,
+.site-title span {
+  color: var(--title-color);
+}
+
+
+/* =====================
+   正文标题
+===================== */
+
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3,
+.sl-markdown-content h4 {
+  color: var(--title-color);
+}
+
+
+/* =====================
+   侧边栏链接
+===================== */
+
+.sidebar-content a {
+  color: var(--text-color);
+  border-radius: 12px;
+  transition: background .15s ease;
+}
+
+
+.sidebar-content a:hover {
+  background: var(--hover-bg);
+}
+
+
+/* 当前页面 */
+
+.sidebar-content a[aria-current="page"] {
+  background: #171717;
+  color: #ffffff;
+}
+
+
+[data-theme="dark"] .sidebar-content a[aria-current="page"] {
+  background: #e5e5e5;
+  color: #171717;
+}
+
+
+/* =====================
+   链接
+===================== */
+
+.sl-markdown-content a {
+  color: var(--title-color);
+  text-decoration-color: #888888;
+}
+
+
+/* =====================
+   顶部导航
+===================== */
+
+header a {
+  color: var(--text-color);
+}
+
+
+/* =====================
+   Focus
+===================== */
+
+:focus-visible {
+  outline-color: #666666;
+}

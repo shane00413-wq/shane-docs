@@ -1,0 +1,69 @@
+---
+title: "华为设备通过microG使用谷歌服务"
+description: "在华为 Android 设备上安装 microG、GsfProxy，并配合 Aurora Store 使用部分 Google 服务。"
+sidebar:
+  order: 1
+---
+import { LinkCard } from '@astrojs/starlight/components';
+
+本教程仅适用于华为Android系统（如HarmonyOS安卓版本）
+不适用于HarmonyOS NeXT 因为它并不属于安卓架构 不兼容安卓应用生态
+
+华为设备使用 Google 服务通常有两种方案：
+- 虚拟沙盒方案：通过虚拟环境运行 Google 应用
+- microG 方案：使用 microG 替代部分 Google 服务，并配合 Aurora Store 下载应用
+本文介绍第二种方案。
+
+## 安装microG
+首先下载 microG 的两个核心组件：
+- microG Services Core
+- microG Companion
+它们分别用于替代 Google Play 服务相关功能，并提供部分 Google Play 商店接口。
+前往microG的官方GitHub仓库下载
+<LinkCard
+title="microG官方GitHub仓库"
+href="https://github.com/microg/GmsCore"
+description="安裝microG服务和microG伴侶"
+/>
+![microG Github Releases](/img/microg/github.microg.png)
+
+下载以下两个 APK：
+
+- `com.android.vending-xxxx-hw.apk`
+  - microG Companion（提供部分 Google Play商店相关接口）
+
+- `com.google.android.gms-xxxx-hw.apk`
+  - microG Services Core（替代 Google Play 服务）
+
+注意：华为设备请选择带 `hw` 后缀的版本。
+
+## 安装GsfProxy
+既然有了服务框架 我们接下来还需要安装GsfProxy
+GsfProxy 用于提供 Google Services Framework 相关接口 部分应用需要它才能正常注册设备 GsfProxy和microG是同一个作者 前往此仓库下载
+<LinkCard
+  title="GsfProxy的GitHub仓库"
+  href="https://github.com/microg/GsfProxy"
+  description="安裝GsfProxy"
+/>
+这个仓库中只有一个文件 那个就是GsfProxy的安装包
+
+## 设置microG
+在安装好上面3个app后 我们需要设置microG服务 设置microG服务需要进入app内 但部分机型不会将app显示在桌面上
+如果显示在桌面上 可以直接进入软件 如果没有显示在桌面上 按照下列步骤
+进入设置/应用管理/microG服务 点击右侧设置按钮
+![shezhi](/img/microg/shezhi.png)
+进入microG服务设置之后 先点击自我检查 授予应用里面的所有权限 有的机型可能“与工作配置文件交互的权限”无法授权 在本人的平板上就是此情况 但实际使用下来是没有影响的
+授权之后就可以在“Google账号”的地方登陆自己的Google帐号了
+
+## 替代Play store
+接下来还需要下载一个替代的play store 可以使用Aurora store 可以在[F-droid](https://f-droid.org/zh_Hans/packages/com.aurora.store/)上面下载它 
+Aurora Store 是一个开源的 Google Play 商店替代客户端，支持匿名下载应用。
+
+## 总结
+目前microG已经适配大量需要Google框架的应用 目前越来越多依赖 Google 服务的应用可以在 microG 环境下运行，包括部分常用 AI 应用 比如chatGPT microG 并不是官方 Google Mobile Services（GMS），无法做到 100% 替代。
+不过对于华为 Android 设备来说，microG + Aurora Store 已经是一套比较成熟的方案，可以满足大部分日常应用需求。
+需要注意：
+- 部分依赖完整 Google Play 服务的应用可能无法运行
+- 部分应用可能会检测 Google 服务状态
+- 使用时建议保持网络环境稳定
+- 部分设备在关闭 VPN 后，应用可能检测 Google 服务状态异常，该情况是否普遍存在与设备和应用有关。 

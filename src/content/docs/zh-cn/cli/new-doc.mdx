@@ -1,0 +1,106 @@
+---
+title: "shane-new-doc 使用指南"
+description: "给 Astro Starlight 文档站新建文档：交互模式和命令模式两种用法。"
+sidebar:
+  order: 5
+---
+import { Tabs, TabItem, Card, CardGrid, Aside, Badge, FileTree } from '@astrojs/starlight/components';
+
+`shane-new-doc` 装好之后（见[安装与快速开始](/zh-cn/cli/install/)），会在项目里生成 `scripts/new-doc.js`，有两种用法。如果运行 `pnpm new-doc` 提示脚本不存在，看[验证是否装成功](/zh-cn/cli/install/#验证是否装成功)——简单说就是有些包管理器会跳过初始化这一步，[安装原理详解](/zh-cn/cli/internals/)里讲清楚了为什么会这样、以及怎么手动补上。
+
+<Aside type="caution" title="和本站自己的 new-doc.js 不是同一个东西">
+这里说的是**发布到 npm 的独立开源包**，命令参数用 `/` 分隔的 `key:value`（比如 `title:xxx`）。本文档站仓库自己手写的那份脚本参数格式是 `--dir --file --title` 这种，两者互不通用。
+</Aside>
+
+## 方式一：交互模式
+
+不带任何参数直接运行：
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm" icon="npm">
+		```bash
+		npm run new-doc
+		```
+	</TabItem>
+	<TabItem label="pnpm" icon="pnpm">
+		```bash
+		pnpm new-doc
+		```
+	</TabItem>
+</Tabs>
+
+会依次问：
+
+<CardGrid>
+	<Card title="目录" icon="open-book"><Badge text="必填" variant="danger" size="small" /> 相对 `src/content/docs/` 的子目录，留空会一直重复问。</Card>
+	<Card title="文件名" icon="document"><Badge text="必填" variant="danger" size="small" /> 立刻做非法字符检查，不合法会重新提示输入。</Card>
+	<Card title="标题 / 描述" icon="pencil"><Badge text="可选" variant="success" size="small" /> 都可以直接回车跳过。</Card>
+	<Card title="排序" icon="list-format"><Badge text="可选" variant="success" size="small" /> 对应 frontmatter 里的 `sidebar.order`，必须是数字或留空，输入非数字会重新提示。</Card>
+</CardGrid>
+
+标题留空的话，会自动用文件名（去掉扩展名）当标题。
+
+## 方式二：命令模式
+
+**前两个位置参数必须依次是目录和文件名，顺序固定不能打乱**——这是整条命令里唯一不能重排的部分。它们后面的每一项都是 `key:value`，和前两个位置参数不同，这些参数**顺序随意**，用 `/` 分隔（也可以用空格 + 结尾 `\` 换行分隔）：
+
+```bash
+pnpm new-doc "guide" "getting-started" title:Getting Started/description:Intro to the project/order:1/mdx:T
+```
+
+下面这样写效果完全一样——同样的键，换了个顺序：
+
+```bash
+pnpm new-doc "guide" "getting-started" \
+  mdx:T \
+  order:1 \
+  title:Getting Started \
+  description:Intro to the project
+```
+
+### 参数表
+
+| 参数 | 别名 | 是否必填 | 说明 |
+|---|---|---|---|
+| `directory` | `dir` | <Badge text="是" variant="danger" size="small" /> | 位置参数 #1，相对 `src/content/docs/`。 |
+| `filename` | — | <Badge text="是" variant="danger" size="small" /> | 位置参数 #2。 |
+| `title` | — | <Badge text="否" variant="success" size="small" /> | 文档标题，不写就默认用文件名（去掉扩展名）。 |
+| `description` | `desc` | <Badge text="否" variant="success" size="small" /> | 文档描述，为空时 frontmatter 里直接不写这个字段。 |
+| `order` | `sidebarorder` | <Badge text="否" variant="success" size="small" /> | 侧边栏排序。只要填了就必须是数字，填了非数字会直接报错并终止命令。 |
+| `mdx` | — | <Badge text="否" variant="success" size="small" /> | 布尔值，规则见下方。`T`/`true` 生成 `.mdx`，否则生成 `.md`。 |
+
+**布尔类型的 `mdx` 参数**规则和 `shane-new-post` 一样：不区分大小写，只有 `t` / `true`（任意大小写）会被识别为"是"。`f`、`false`、空值，或者不写这个参数，都会被当成"否"——同样没有专门判断"false"的逻辑，凡是不匹配"true"的都落到默认值。
+
+<Aside type="tip" title="dir 也能当 key:value 用，不只是位置参数">
+`directory` 除了是必填的第一个位置参数外，还有一个 `dir` 别名可以当 `key:value` 用在后面。实际使用时基本只会用位置参数的写法（`pnpm new-doc "guide" "getting-started" ...`）——这个别名主要是为了和其它参数名保持风格一致；如果两种写法同时出现，后面 `dir:` 的值会覆盖前面位置参数给的目录。
+</Aside>
+
+<Aside type="note" title="配置文件">
+安装时问过的配图目录（默认 `public/img`）会连同选定的 `lang` 一起写进项目根目录的 `.shane-new-doc.json`。**文档目录本身（`src/content/docs/`）不可配置**——Starlight 的 `docsLoader()` 写死读取这个路径，改了也不会生效，反而会让生成的文档落在 Starlight 根本不会渲染的地方，所以这个工具干脆不提供这个选项；能选的只有 `src/content/docs/` **内部**的子目录，也就是 `directory` 参数。
+</Aside>
+
+## 会生成什么
+
+<FileTree>
+- src/
+  - content/
+    - docs/
+      - guide/
+        - **getting-started.md** 新文档，sidebar order 为 1
+- public/
+  - img/
+    - guide/
+      - **getting-started/** 同名配图文件夹，空的
+</FileTree>
+
+## 其它行为
+
+- 只有项目依赖里检测到 `@astrojs/starlight` 才会生成/管理脚本，不会误装进无关项目。
+- 同名文件已存在时**不会覆盖**，会自动在文件名后加 `(2)`、`(3)` 这样的序号，并打印提示。
+- 每次新建文档都会自动创建对应子目录下同名的配图文件夹。
+- 支持 `.md` 和 `.mdx`；如果文件名本身已经带了这两种扩展名之一，会原样使用，并提示 `mdx` 参数被忽略。
+- 目录 / 文件名只要解析结果会跑出 `src/content/docs/` 之外（比如靠 `..`），一律拒绝，即便非法字符检查被绕过也会在这一步拦下来。
+
+<Aside type="caution" title="包装好之后不要直接跑 create-shane-new-doc">
+`shane-new-doc` 自己也注册了一个本地的 `create-shane-new-doc` 命令，跟独立发布的 `create-shane-new-doc` 包**不是同一个东西**——装完包之后如果直接跑（比如 `npx create-shane-new-doc`），只会改动 `.shane-new-doc.json`，**不会**生成 `scripts/new-doc.js`。初始化请一直用 `npm create shane-new-doc@latest`。完整说明见[安装原理详解](/zh-cn/cli/internals/#一个值得注意的命名冲突)。
+</Aside>

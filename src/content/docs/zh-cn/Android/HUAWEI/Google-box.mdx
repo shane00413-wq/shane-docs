@@ -1,0 +1,41 @@
+---
+title: "华为设备使用虚拟沙盒运行谷歌应用"
+description: "介绍华为 Android 设备上通过虚拟沙盒运行 Google 应用的方法"
+sidebar:
+  order: 2
+---
+本教程主要适用于 Android 系统的华为设备（如鸿蒙 4.2）鸿蒙 NEXT 也可以使用部分虚拟沙盒方案 本文不过多讲解
+
+华为设备使用 Google 服务通常有两种方案：
+
+- 虚拟沙盒方案：通过虚拟环境运行 Google 应用
+- microG 方案：使用 microG 替代部分 Google 服务 并配合 Aurora Store 下载应用
+本文介绍第一种方案
+
+## 选择虚拟沙盒
+目前常见的华为设备 Google 虚拟沙盒方案主要有 GBox 和谷歌空间（GSpace）
+这两种都是比较常见的 Google 服务运行方案
+GSpace 广告较多 因此不建议使用
+## 安装方法
+以 GBox 为例 你可以将华为应用市场的地区设置为境外地区（如中国香港）即可直接下载 GBox
+如果你的华为账号无法切换地区 可以前往 GBox 官网下载安装包：
+[GBox 官网](https://gboxlab.com/i18n/zh-Hant/)
+GSpace 同理 如果你的华为账号无法切换地区 可以前往 [GSpace 官网](https://gspaceteam.com/) 下载
+安装完成后 进入 GBox 应用内已经预装了 Play Store 进入 Play Store 后登录自己的 Google 账号
+登录完成后 就可以安装需要使用的应用
+安装的应用会自动添加到 GBox 主页中（不会安装到自己的设备系统中）你可以在桌面创建快捷方式 以便快速跳转到 GBox 内的应用
+## 总结
+虚拟沙盒的优点是操作简单、容易上手 适合零基础用户
+但是 由于是在虚拟环境中运行 Google 服务 性能开销会更高 后台运行可能受到系统限制 通知可能会延迟 并且无法完全替代系统级 Google 服务
+可能在登录 Google 账号时 你也发现了上面显示“microG 服务”
+因为 GBox 内部使用的也是 microG 但它运行在虚拟环境中 性能消耗相比直接在系统中安装更高 稳定性也会有所降低
+所以 如果你需要长期使用 Google 服务 而不是临时使用 我更推荐直接在系统中安装 microG
+安装microG教程:
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+<LinkCard
+  title="华为设备使用 microG 替代 Google 服务框架"
+  href="/zh-cn/Android/HUAWEI/microg/"
+  description="通过 microG 替代部分 Google 服务组件 并配合 Aurora Store 使用 Google 应用"
+/>

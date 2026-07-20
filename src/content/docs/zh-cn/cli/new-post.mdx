@@ -1,0 +1,99 @@
+---
+title: "shane-new-post 使用指南"
+description: "给 AstroPaper 风格 Astro 博客新建文章：交互模式和命令模式两种用法。"
+sidebar:
+  order: 4
+---
+import { Tabs, TabItem, Card, CardGrid, Aside, Badge, FileTree } from '@astrojs/starlight/components';
+
+`shane-new-post` 装好之后（见[安装与快速开始](/zh-cn/cli/install/)），会在项目里生成 `scripts/new-post.js`，有两种用法。如果运行 `pnpm new-post` 提示脚本不存在，看[验证是否装成功](/zh-cn/cli/install/#验证是否装成功)——简单说就是有些包管理器会跳过初始化这一步，[安装原理详解](/zh-cn/cli/internals/)里讲清楚了为什么会这样、以及怎么手动补上。
+
+## 方式一：交互模式
+
+不带任何参数直接运行：
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm" icon="npm">
+		```bash
+		npm run new-post
+		```
+	</TabItem>
+	<TabItem label="pnpm" icon="pnpm">
+		```bash
+		pnpm new-post
+		```
+	</TabItem>
+</Tabs>
+
+会依次问：
+
+<CardGrid>
+	<Card title="标题" icon="pencil"><Badge text="必填" variant="danger" size="small" /> 最先问，留空会一直重复问。</Card>
+	<Card title="文件名" icon="document"><Badge text="必填" variant="danger" size="small" /> 会根据标题自动建议一个 slug，直接回车就用建议的，也可以自己输入。</Card>
+	<Card title="标签" icon="list-format"><Badge text="可选" variant="success" size="small" /> 逗号分隔，问之前会先列出项目里已有文章用过的标签供参考。</Card>
+	<Card title="描述 / 精选 / 草稿 / mdx" icon="setting"><Badge text="可选" variant="success" size="small" /> 都可以直接回车跳过，用默认值（描述留空、不精选、非草稿、生成 `.md` 而不是 `.mdx`）。</Card>
+</CardGrid>
+
+文件名会做非法字符、路径分隔符、`..` 路径穿越检查，不合法会重新提示输入，不会直接崩溃。
+
+## 方式二：命令模式
+
+**唯一必填的位置参数是文件名，且必须排在最前面**。后面的每一项都是 `key:value`，和文件名不同，这些 `key:value` 参数**顺序随意**，用 `/` 分隔（也可以用空格 + 结尾 `\` 换行分隔）：
+
+```bash
+pnpm new-post "getting-started" title:Getting Started/description:An intro post/tags:[astro,web]/draft:F/featured:T/mdx:T
+```
+
+下面这样写效果完全一样——同样的键，换了个顺序，用 `\` 换行代替挤在一行：
+
+```bash
+pnpm new-post "getting-started" \
+  mdx:T \
+  featured:T \
+  title:Getting Started \
+  tags:[astro,web] \
+  draft:F \
+  description:An intro post
+```
+
+### 参数表
+
+| 参数 | 别名 | 是否必填 | 说明 |
+|---|---|---|---|
+| `title` | — | <Badge text="是" variant="danger" size="small" /> | 文章标题。命令模式下缺失会直接报错退出。 |
+| `description` | `desc` | <Badge text="否" variant="success" size="small" /> | 文章描述，不写就是空字符串。 |
+| `tags` | `tag` | <Badge text="否" variant="success" size="small" /> | 方括号包裹、逗号分隔：`[标签1,标签2]`，不写就是空列表。 |
+| `draft` | — | <Badge text="否" variant="success" size="small" /> | 布尔值，规则见下方，默认 `false`。 |
+| `featured` | — | <Badge text="否" variant="success" size="small" /> | 布尔值，规则见下方，默认 `false`。 |
+| `mdx` | — | <Badge text="否" variant="success" size="small" /> | 布尔值，规则见下方。`T`/`true` 生成 `.mdx`，否则生成 `.md`。 |
+
+**布尔类型的参数**（`draft`、`featured`、`mdx`）不区分大小写，除了完整单词 `true` / `false`，也支持简写 `T` / `F`。具体判定：只有 `t` 或 `true`（任意大小写）会被识别为"是"；`f`、`false`、空值，或者干脆不写这个参数，都会被当成"否"——没有专门判断"false"的逻辑，凡是不匹配"true"的都直接落到默认值。
+
+**认不出的参数名**（打错字，或者不小心用了 `shane-new-doc` 那边的参数名比如 `order`）只会打印一条警告并跳过，不会中断整个流程，文章依然会正常生成。
+
+<Aside type="note" title="配置文件">
+安装时问过的默认作者名会连同选定的 `lang` 一起写进项目根目录的 `.shane-new-post.json`，`new-post.js` 每次运行都会读这个文件。留空不写完全没问题——生成的文章 frontmatter 里会直接省略 `author` 字段。
+</Aside>
+
+## 会生成什么
+
+<FileTree>
+- src/
+  - content/
+    - posts/
+      - **getting-started.md** 新文章
+- public/
+  - img/
+    - **getting-started/** 同名配图文件夹，空的
+</FileTree>
+
+## 其它行为
+
+- 同名文件已存在时会直接报错并取消，不会覆盖已有文章。
+- 每次新建文章都会自动创建同名（去掉扩展名）的配图文件夹。
+- 支持 `.md` 和 `.mdx`；如果文件名本身已经带了这两种扩展名之一，会原样使用，`mdx` 参数对扩展名不再生效。
+- frontmatter 里的字符串字段（标题、描述、标签、作者）都会自动做引号转义，就算内容里有冒号、`#`、引号也不会破坏解析。
+
+<Aside type="caution" title="装好之后不要直接跑 create-shane-new-post">
+`shane-new-post` 自己也注册了一个本地的 `create-shane-new-post` 命令，跟独立发布的 `create-shane-new-post` 包**不是同一个东西**——装完包之后如果直接跑（比如 `npx create-shane-new-post`），只会改动 `.shane-new-post.json`，**不会**生成 `scripts/new-post.js`。初始化请一直用 `npm create shane-new-post@latest`。完整说明见[安装原理详解](/zh-cn/cli/internals/#一个值得注意的命名冲突)。
+</Aside>

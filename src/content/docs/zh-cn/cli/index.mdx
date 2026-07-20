@@ -1,0 +1,75 @@
+---
+title: "CLI 工具"
+description: "两个用来给 Astro 博客 / Starlight 文档站快速建文件的命令行工具：shane-new-post 和 shane-new-doc，都支持中英两种语言。"
+sidebar:
+  order: 1
+---
+import { Card, CardGrid, LinkCard, Badge } from '@astrojs/starlight/components';
+
+两个小巧的 npm 命令行工具，用来快速新建内容文件：
+
+<CardGrid>
+	<Card title="shane-new-post" icon="pencil">
+		给 **AstroPaper 风格的 Astro 博客**用——任何 frontmatter 结构接近 `title` / `pubDatetime` / `tags` / `featured` / `draft` 这套 AstroPaper 惯例的博客集合都适用。支持交互式问答，也支持一行命令直接生成，自动创建配图文件夹、根据标题自动建议文件名，支持标签 / 精选 / 草稿 / mdx 等字段。
+	</Card>
+	<Card title="shane-new-doc" icon="add-document">
+		给 **Astro Starlight 文档站**（比如这个网站）用——依赖里带 `@astrojs/starlight` 的项目都适用。同样支持交互式和命令式两种用法，自带目录/文件名合法性检查，重名会自动加序号而不是覆盖。
+	</Card>
+</CardGrid>
+
+两个工具不能混着用：`shane-new-post` 写的是单层结构的文章目录（`src/content/posts/`），`shane-new-doc` 写进 Starlight 那种带层级的文档目录（`src/content/docs/<目录>/`），还会处理侧边栏排序。选哪个工具，关键看项目框架，不是看你要写的是什么内容。
+
+:::note[和本站自己的脚本不是一回事]
+本文档站仓库根目录下还有一个 `new-doc.js`，是手写的本地专用脚本（`pnpm new-doc`），参数格式是 `--dir --file --title ...`，只服务于这一个仓库，不会发布到 npm。下面几篇讲的 `shane-new-doc` / `shane-new-post` 是**独立发布的开源包**，可以装进任何符合条件的项目里，命令参数格式也不一样（用 `/` 分隔的 `key:value`），使用前不要搞混。
+:::
+
+## 支持中英两种语言
+
+每个工具装一次就同时支持中英文，不用再纠结装普通版还是 `-chinese` 版。所有提示、注释、报错信息都来自包里自带的一对 `en.json` / `zh-cn.json`，每次都会一起装进去。
+
+语言只在安装时问**一次**：如果终端是交互式的、又没有提前传参数，安装器会问「Select CLI language / 选择界面语言」，选择结果会保存到项目根目录的 `.shane-new-post.json` / `.shane-new-doc.json` 里，之后每次运行都会自动沿用，不会再问。也可以提前用 `--lang=en` / `--lang=zh-cn` 跳过这个提问，或者以后在某次命令上临时覆盖而不改动已保存的设置。完整的判定顺序见[安装与快速开始](/zh-cn/cli/install/)。
+
+## 两个工具共用的命令行约定
+
+<Badge text="两个工具都适用" variant="note" /> 下面几条规则在 `new-post` 和 `new-doc` 的命令模式里是通用的，建议先看一遍，再去看各自的详细用法：
+
+- **`key:value` 参数的顺序可以随意打乱**，可以用 `/` 分隔，也可以用空格分隔（配合结尾的 `\` 换行）。只有排在 `key:value` 参数之前的**位置参数**——`new-post` 的文件名、`new-doc` 的目录和文件名——顺序是固定的，不能打乱。
+- **布尔值不区分大小写**，除了完整单词 `true` / `false`，也支持简写 `T` / `F`。具体规则是：只有 `t` 或 `true`（不论大小写，比如 `T`、`True`、`TRUE`）会被识别为"是"；其它任何值——`f`、`false`、空值，或者干脆不写这个参数——都会被当成"否"。
+- **部分参数名有别名**（比如 `description` 可以简写成 `desc`），完整列表见各自工具的参数表。
+- **认不出的参数名只会提示警告，不会报错**——某个可选字段名字打错了，也不会影响文件正常生成。
+
+## 安装的时候到底做了什么
+
+两个包都自带一个 `postinstall` 脚本，依赖装完的那一刻会自动触发（靠的是 npm/pnpm/yarn 自己的生命周期脚本机制，这是 `package.json` 的标准行为，不是这个项目自己发明的）。简单说：它会先检查项目是否符合条件，然后往 `scripts/` 目录放一个可以直接运行的脚本、保存一个小配置文件，再往 `package.json` 里塞一条 `pnpm new-doc` / `pnpm new-post` 命令——全程不需要手动复制粘贴。它做的每一步检测（框架识别、冲突扫描、包管理器识别，以及某一步被跳过时该怎么办）都在[安装原理详解](/zh-cn/cli/internals/)里逐条写清楚了——就算一切顺利也建议看一遍，里面也讲了出问题时怎么手动补上。
+
+## 继续阅读
+
+<CardGrid>
+	<LinkCard
+		title="安装与快速开始"
+		description="一键安装器 vs 手动安装，npm / pnpm 命令都有"
+		href="/zh-cn/cli/install/"
+	/>
+	<LinkCard
+		title="安装原理详解"
+		description="postinstall 做的每一步检测和文件改动，按顺序讲清楚"
+		href="/zh-cn/cli/internals/"
+	/>
+	<LinkCard
+		title="shane-new-post 使用指南"
+		description="交互模式 + 命令模式，参数表和示例"
+		href="/zh-cn/cli/new-post/"
+	/>
+	<LinkCard
+		title="shane-new-doc 使用指南"
+		description="交互模式 + 命令模式，参数表和示例"
+		href="/zh-cn/cli/new-doc/"
+	/>
+</CardGrid>
+
+## 源码
+
+<CardGrid>
+	<LinkCard title="shane-new-post" href="https://github.com/shane00413-wq/shane-new-post" description="GitHub 仓库" />
+	<LinkCard title="shane-new-doc" href="https://github.com/shane00413-wq/shane-new-doc" description="GitHub 仓库" />
+</CardGrid>

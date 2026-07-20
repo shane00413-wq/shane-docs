@@ -1,0 +1,2 @@
+Android:Android>Huawei|华为:HUAWEI
+CLI Tools|CLI 工具:cli

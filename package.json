@@ -1,0 +1,24 @@
+{
+  "name": "shane-docs",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "new-doc": "node new-doc.js",
+    "sidebar": "node generate-sidebar.js",
+    "push": "git add . && git commit -m \"update\" || true && git push",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@astrojs/starlight": "^0.41.3",
+    "astro": "^7.0.2",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

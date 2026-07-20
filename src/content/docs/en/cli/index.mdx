@@ -1,0 +1,75 @@
+---
+title: "CLI Tools"
+description: "Two command-line tools for quickly scaffolding files in Astro blogs and Starlight docs sites: shane-new-post and shane-new-doc, both with English and Chinese support."
+sidebar:
+  order: 1
+---
+import { Card, CardGrid, LinkCard, Badge } from '@astrojs/starlight/components';
+
+Two small npm CLI tools for scaffolding new content files:
+
+<CardGrid>
+	<Card title="shane-new-post" icon="pencil">
+		For **AstroPaper-style Astro blogs** — any blog collection with a `title` / `pubDatetime` / `tags` / `featured` / `draft` frontmatter shape similar to AstroPaper's. Interactive mode or a single command, with automatic image-folder creation, filename suggestions from the title, and support for tags / featured / draft / mdx fields.
+	</Card>
+	<Card title="shane-new-doc" icon="add-document">
+		For **Astro Starlight sites** (like this one) — any project with `@astrojs/starlight` as a dependency. Same interactive and command modes, plus directory/filename safety checks and automatic renaming on collision instead of overwriting.
+	</Card>
+</CardGrid>
+
+The two tools are not interchangeable: `shane-new-post` writes into a flat posts collection (`src/content/posts/`), while `shane-new-doc` writes into Starlight's nested docs collection (`src/content/docs/<directory>/`) and understands sidebar ordering. Pick the one that matches the target project's framework, not the one that matches the content type.
+
+:::note[Not the same as this site's own script]
+This docs site's own repo also has a `new-doc.js` at its root — a hand-written script (`pnpm new-doc`) that only serves this one repo and isn't published to npm. Its argument style is `--dir --file --title ...`. The `shane-new-doc` / `shane-new-post` covered below are **separately published open-source packages** you can install into any qualifying project, and they use a different argument style (`/`-separated `key:value` pairs). Don't mix the two up.
+:::
+
+## English & Chinese support
+
+Each tool supports English and Chinese out of the box — there is no separate `-chinese` variant to choose between. All prompts, comments, and error messages come from an `en.json` / `zh-cn.json` pair bundled inside the package, both installed together every time.
+
+Language is picked **once**, at install time: if the terminal is interactive and no flag was passed, the installer asks "Select CLI language / 选择界面语言" and saves the answer to `.shane-new-post.json` / `.shane-new-doc.json` in the project root, so every later run reuses it automatically without asking again. The prompt can also be skipped up front with `--lang=en` / `--lang=zh-cn`, or overridden later on a single command without touching the saved setting. See [Install & Quick Start](/en/cli/install/) for the full language-resolution order.
+
+## Command-line conventions shared by both tools
+
+<Badge text="Applies to both tools" variant="note" /> A few rules are shared across `new-post` and `new-doc`'s command mode — worth knowing before reading either tool's individual guide:
+
+- **`key:value` pairs can appear in any order**, and can be separated by `/` or by spaces (with a trailing `\` for a multi-line command). Only the *positional* arguments that come before the `key:value` pairs — the filename for `new-post`, the directory and filename for `new-doc` — have a fixed order.
+- **Boolean values are case-insensitive**, and accept the shorthand `T` / `F` as well as the full words `true` / `false`. Concretely: only `t` or `true` (in any casing, e.g. `T`, `True`, `TRUE`) is read as *yes*; every other value — `f`, `false`, empty, or anything else — is read as *no*.
+- **Keys have a couple of accepted aliases** (e.g. `description` can be written `desc`) — see each tool's own argument reference table for the full list.
+- **Unrecognized keys are ignored with a warning**, not an error — a typo in an optional field doesn't stop the file from being created.
+
+## What installing one of these actually does
+
+Both packages ship a `postinstall` script that runs automatically the moment the dependency finishes installing (via npm/pnpm/yarn's own lifecycle-script mechanism — standard `package.json` behavior, not something this project invents). In short: it checks whether the project is a fit, then drops a ready-to-run script into `scripts/`, saves a small config file, and wires up a `pnpm new-doc` / `pnpm new-post` command in `package.json` — no manual copy-pasting. Every check it performs (framework detection, conflict scanning, package-manager detection, and what to do if a step gets silently skipped) is documented in full, step by step, in [Installation Internals](/en/cli/internals/) — worth a read even if nothing ever goes wrong, since it also covers how to fix things by hand.
+
+## Keep reading
+
+<CardGrid>
+	<LinkCard
+		title="Install & Quick Start"
+		description="One-command installer vs manual install, npm & pnpm"
+		href="/en/cli/install/"
+	/>
+	<LinkCard
+		title="Installation Internals"
+		description="Every detection step and file change postinstall performs, in order"
+		href="/en/cli/internals/"
+	/>
+	<LinkCard
+		title="shane-new-post Guide"
+		description="Interactive & command mode, argument table and examples"
+		href="/en/cli/new-post/"
+	/>
+	<LinkCard
+		title="shane-new-doc Guide"
+		description="Interactive & command mode, argument table and examples"
+		href="/en/cli/new-doc/"
+	/>
+</CardGrid>
+
+## Source
+
+<CardGrid>
+	<LinkCard title="shane-new-post" href="https://github.com/shane00413-wq/shane-new-post" description="GitHub repository" />
+	<LinkCard title="shane-new-doc" href="https://github.com/shane00413-wq/shane-new-doc" description="GitHub repository" />
+</CardGrid>

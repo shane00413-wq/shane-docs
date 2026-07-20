@@ -1,0 +1,99 @@
+---
+title: "shane-new-post Guide"
+description: "Scaffold new posts for AstroPaper-style Astro blogs: interactive and command mode."
+sidebar:
+  order: 4
+---
+import { Tabs, TabItem, Card, CardGrid, Aside, Badge, FileTree } from '@astrojs/starlight/components';
+
+Once `shane-new-post` is installed (see [Install & Quick Start](/en/cli/install/)), it drops a `scripts/new-post.js` into the project. There are two ways to run it. If `pnpm new-post` says the script doesn't exist, see [Verify the install](/en/cli/install/#verify-the-install) — the short version is that some package managers skip the setup step, and [Installation Internals](/en/cli/internals/) explains exactly why and how to finish it by hand.
+
+## Interactive mode
+
+Run it with no arguments:
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm" icon="npm">
+		```bash
+		npm run new-post
+		```
+	</TabItem>
+	<TabItem label="pnpm" icon="pnpm">
+		```bash
+		pnpm new-post
+		```
+	</TabItem>
+</Tabs>
+
+You'll be walked through, in order:
+
+<CardGrid>
+	<Card title="Title" icon="pencil"><Badge text="Required" variant="danger" size="small" /> Asked first, and asked again if left blank.</Card>
+	<Card title="Filename" icon="document"><Badge text="Required" variant="danger" size="small" /> A slug is suggested from the title — press enter to accept it, or type a different one.</Card>
+	<Card title="Tags" icon="list-format"><Badge text="Optional" variant="success" size="small" /> Comma-separated; previously used tags across existing posts are listed for reference before you're asked.</Card>
+	<Card title="Description / featured / draft / mdx" icon="setting"><Badge text="Optional" variant="success" size="small" /> Leave blank for the default (empty description, not featured, not a draft, `.md` instead of `.mdx`).</Card>
+</CardGrid>
+
+The filename is checked for path separators, illegal characters, and `..` traversal — an invalid entry re-prompts instead of crashing.
+
+## Command mode
+
+The **filename is the only required positional argument**, and it must come first. Everything after it is a `key:value` pair, and — unlike the filename — those pairs can be written in **any order**, separated by `/` (or split across lines with a trailing `\`):
+
+```bash
+pnpm new-post "getting-started" title:Getting Started/description:An intro post/tags:[astro,web]/draft:F/featured:T/mdx:T
+```
+
+This is exactly equivalent — same keys, different order, split with `\` instead of packed onto one line:
+
+```bash
+pnpm new-post "getting-started" \
+  mdx:T \
+  featured:T \
+  title:Getting Started \
+  tags:[astro,web] \
+  draft:F \
+  description:An intro post
+```
+
+### Argument reference
+
+| Key | Alias | Required | Description |
+|---|---|---|---|
+| `title` | — | <Badge text="Yes" variant="danger" size="small" /> | Post title. Command mode exits with an error if it's missing. |
+| `description` | `desc` | <Badge text="No" variant="success" size="small" /> | Post description. Empty string if omitted. |
+| `tags` | `tag` | <Badge text="No" variant="success" size="small" /> | Comma-separated inside brackets: `[tag1,tag2]`. Empty list if omitted. |
+| `draft` | — | <Badge text="No" variant="success" size="small" /> | Boolean, see below. Defaults to `false`. |
+| `featured` | — | <Badge text="No" variant="success" size="small" /> | Boolean, see below. Defaults to `false`. |
+| `mdx` | — | <Badge text="No" variant="success" size="small" /> | Boolean, see below. `T`/`true` creates a `.mdx` file; otherwise `.md`. |
+
+**Boolean values** (`draft`, `featured`, `mdx`) are case-insensitive and accept the shorthand `T` / `F` alongside the full words `true` / `false`. Only `t` or `true` in any casing counts as *yes* — `f`, `false`, an empty value, or leaving the key out entirely all mean *no*. There's no dedicated "false" check; anything that isn't a `t`/`true` match simply falls through to the default.
+
+**Unrecognized keys** (a typo, or a leftover key from `shane-new-doc`'s vocabulary like `order`) are printed as a warning and skipped — they don't stop the post from being created.
+
+<Aside type="note" title="Config file">
+The default author name asked for during setup is saved to `.shane-new-post.json` in the project root (alongside the chosen `lang`), and `new-post.js` reads it on every run. Leaving it blank is fine — the `author` frontmatter field is simply omitted from generated posts.
+</Aside>
+
+## What gets created
+
+<FileTree>
+- src/
+  - content/
+    - posts/
+      - **getting-started.md** new post
+- public/
+  - img/
+    - **getting-started/** matching image folder, empty
+</FileTree>
+
+## Other behavior
+
+- Refuses to overwrite an existing post with the same filename — errors out instead of touching it.
+- Automatically creates a matching image folder (named after the post's filename, without extension) for every new post.
+- Supports both `.md` and `.mdx`; if the filename already ends in one of those, it's used as-is and the `mdx` flag is ignored for the extension.
+- Frontmatter string values (title, description, tags, author) are always quote-escaped, so a value containing a colon, `#`, or quote mark won't break the parser.
+
+<Aside type="caution" title="Don't run create-shane-new-post directly once the package is already installed">
+`shane-new-post` also registers a local `create-shane-new-post` binary that's *not* the same as the standalone `create-shane-new-post` package — running it directly (e.g. via `npx create-shane-new-post` after installing) only touches `.shane-new-post.json` and will **not** generate `scripts/new-post.js`. Always use `npm create shane-new-post@latest` for setup. Full explanation in [Installation Internals](/en/cli/internals/#a-naming-collision-worth-knowing-about).
+</Aside>

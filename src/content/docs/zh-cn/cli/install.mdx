@@ -1,0 +1,194 @@
+---
+title: "安装与快速开始"
+description: "shane-new-post / shane-new-doc 的两种安装方式：一键安装器，或者手动安装。"
+sidebar:
+  order: 2
+---
+import { Tabs, TabItem, Steps, Aside, FileTree } from '@astrojs/starlight/components';
+
+两个工具（`shane-new-post` 给博客用，`shane-new-doc` 给文档站用）安装方式完全一样，下面统一用 `shane-new-post` 举例，把命令里的名字换成 `shane-new-doc` 就是另一个工具的用法。
+
+## 方式一：一键安装器（推荐）
+
+用法和 `npm create astro@latest` 一样，在项目根目录（`package.json` 所在目录）执行：
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm" icon="npm">
+		```bash
+		npm create shane-new-post@latest
+		```
+	</TabItem>
+	<TabItem label="pnpm" icon="pnpm">
+		```bash
+		pnpm create shane-new-post@latest
+		```
+	</TabItem>
+</Tabs>
+
+它会自动帮你做完这几件事：
+
+<Steps>
+1. 扫描项目里是否已经有会冲突的同名脚本（比如 `new-post.js` 及其常见变体），有冲突会先问要不要删掉。
+2. 识别当前用的包管理器（npm / pnpm / yarn），用对应的命令安装依赖。
+3. 如果包管理器跳过了安装脚本（较新版本的 pnpm 常见），会自动补跑一次初始化，保证装完就能用。
+</Steps>
+
+安装过程中会问一个默认作者名（`shane-new-post` 才有这一步，`shane-new-doc` 没有 author 字段：Starlight 默认的文档 schema 本来就没有 `author` 这个键，硬写进去会导致 schema 校验失败，所以直接跳过）。直接回车可以跳过不写。装完之后项目结构大致是这样：
+
+<FileTree>
+- src/
+  - content/
+    - posts/
+- public/
+  - img/
+- scripts/
+  - **new-post.js**
+- .shane-new-post.json 保存的语言 + 作者选择
+- package.json
+</FileTree>
+
+`pnpm new-post` / `pnpm new-doc` 立刻就能用。
+
+### 选择语言
+
+两个包都在同一次安装里同时带上了中英文提示——不需要额外装什么。如果终端是交互式的、又没有提前指定语言，安装器会问一次：
+
+```
+Select CLI language / 选择界面语言: (使用方向键)
+❯ English
+  简体中文
+```
+
+选择结果会保存到项目根目录的 `.shane-new-post.json` / `.shane-new-doc.json` 里，之后每次运行 `new-post` / `new-doc` 都会沿用，不会再问。
+
+想跳过这个提问，提前加一个 `--lang` 参数就行：
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm" icon="npm">
+		```bash
+		npm create shane-new-post@latest -- --lang=zh-cn
+		```
+	</TabItem>
+	<TabItem label="pnpm" icon="pnpm">
+		```bash
+		pnpm create shane-new-post@latest --lang=zh-cn
+		```
+	</TabItem>
+</Tabs>
+
+<Aside type="tip" title="npm 记得加 --">
+npm 需要在参数前面加一个额外的 `--` 才能把 `--lang` 透传给安装器，pnpm 不需要。
+</Aside>
+
+`--lang=en` 同样可以用，简写 `--en` / `--zh` / `--zh-cn` / `--chinese` / `--english` 也都支持。
+
+#### 完整的语言判定顺序
+
+每次运行 `new-post` / `new-doc`，语言按下面顺序判定，第一个命中的生效：
+
+1. **本次命令上的参数**：`--lang=en` / `--lang=zh-cn`（或者简写如 `--zh-cn` / `--en`）。就算已经保存过语言设置，这个参数也会优先生效，相当于一次性覆盖，且不会改动已保存的配置。
+2. **环境变量 `SHANE_CLI_LANG`**——适合 CI 环境，或者把语言选择透传给子进程。
+3. **配置文件里已保存的 `"lang"` 字段**（`.shane-new-post.json` / `.shane-new-doc.json`）——安装时问过一次之后就存在这里，之后一直沿用。
+4. **操作系统/终端的系统语言**（先看 `Intl`，再看 `$LC_ALL` / `$LANG` / `$LANGUAGE`）——只有前面几条都没命中时才会用这个来猜。
+5. **兜底用英文**。
+
+只有第 4 条是兜底猜的，没什么把握；前三条都是用户或环境明明白白指定过的。以后想换语言，不用重新跑安装器：直接改配置文件里的 `"lang"` 字段，或者在某次 `new-post` / `new-doc` 命令上临时加 `--lang` 做一次性覆盖都行。
+
+## 方式二：手动安装
+
+如果不想用一键安装器，也可以直接把包加进依赖：
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm" icon="npm">
+		```bash
+		npm install -D shane-new-post
+		```
+	</TabItem>
+	<TabItem label="pnpm" icon="pnpm">
+		```bash
+		pnpm add -D shane-new-post
+		pnpm approve-builds
+		```
+	</TabItem>
+</Tabs>
+
+两种语言都打包在同一个包里——不管装 `shane-new-post` 还是 `shane-new-doc`，中英文提示都在。怎么选语言见上面的[选择语言](#选择语言)一节。
+
+<Aside type="caution" title="pnpm 需要额外批准安装脚本">
+pnpm v9 / v10 默认会拦截新依赖的安装脚本（`postinstall`）。执行 `pnpm approve-builds`，方向键选中 `shane-new-post`，按空格勾选，回车确认即可。想以后都不用手动批准，可以在项目的 `package.json` 里加：
+
+```json
+"pnpm": { "onlyBuiltDependencies": ["shane-new-post"] }
+```
+</Aside>
+
+## 验证是否装成功
+
+不管用哪种方式装的，别只是"感觉应该装好了"，去项目根目录确认两件事：
+
+<Steps>
+1. **根目录下有一个 `.shane-new-post.json`（或 `.shane-new-doc.json`）文件**，里面至少保存了一个 `"lang"` 字段。
+2. **`package.json` 的 `"scripts"` 里有一条 `new-post`（或 `new-doc`）**，指向 `scripts/` 目录下生成的那个文件。
+</Steps>
+
+大部分情况下这两样都会自动到位，可以直接跳到 [shane-new-post 使用指南](/zh-cn/cli/new-post/) 或 [shane-new-doc 使用指南](/zh-cn/cli/new-doc/)。但有些包管理器——尤其是较新版本的 pnpm——默认会跳过生命周期脚本（`postinstall`），一些 CI / 非交互式安装环境也可能全局开了 `--ignore-scripts`。这种情况下依赖会正常写进 `package.json`，但 `scripts/` 下什么都不会生成，`scripts` 字段那条也不会被写进去。一键安装器（`npm create` / `pnpm create`）已经内置了针对这种情况的二次检测和自动补跑——具体怎么做的见[安装原理详解](/zh-cn/cli/internals/)。**手动安装**（上面的方式二）没有这层保险，所以最容易碰到这种情况的就是它。
+
+如果发现 `scripts/new-post.js`（或 `new-doc.js`）不存在，或者 `package.json` 里没有对应那一行，先手动补跑一次安装脚本：
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm" icon="npm">
+		```bash
+		node node_modules/shane-new-post/bin/postinstall.js
+		```
+	</TabItem>
+	<TabItem label="pnpm" icon="pnpm">
+		```bash
+		node node_modules/shane-new-post/bin/postinstall.js
+		```
+	</TabItem>
+</Tabs>
+
+这跟 postinstall 平时自动执行的步骤完全一样——没有任何区别，只是从"自动触发"变成"手动触发"而已。如果连这个文件都不存在（属于非常少见的安装失败），那就自己动手把那一行加进 `package.json`。加之前：
+
+```json title="package.json"
+{
+  "name": "my-docs-site",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.30.0",
+    "astro": "^5.0.0"
+  }
+}
+```
+
+加之后——`"scripts"` 里多了一行，其它内容完全不动：
+
+```json title="package.json"
+{
+  "name": "my-docs-site",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
++   "new-doc": "node scripts/new-doc.js"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.30.0",
+    "astro": "^5.0.0"
+  }
+}
+```
+
+<Aside type="note" title="路径要和脚本实际落地的位置一致">
+这行的值固定是 `node scripts/<文件名>.js`，文件名要用 `scripts/` 目录里实际存在的那个——一般就是 `new-doc.js` / `new-post.js`，但如果项目在安装前就已经有一个名字很接近的脚本了（候选文件名的完整列表见[安装原理详解](/zh-cn/cli/internals/#哪些已有文件名会被当成同一个脚本)），生成器会直接复用**那个**文件名，而不是另外新建一个。手动加这一行之前，先看看 `scripts/` 里到底是什么文件名。
+</Aside>
+
+对 `shane-new-post` 来说，对应的那一行是 `"new-post": "node scripts/new-post.js"`——道理一样，键名和路径不同。
+
+

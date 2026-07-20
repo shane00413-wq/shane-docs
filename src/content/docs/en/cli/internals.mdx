@@ -1,0 +1,152 @@
+---
+title: "Installation Internals"
+description: "A line-by-line walkthrough of everything shane-new-post / shane-new-doc's postinstall script detects and changes, plus what the one-command installer adds on top."
+sidebar:
+  order: 3
+---
+import { Steps, Aside, Badge, FileTree, Tabs, TabItem } from '@astrojs/starlight/components';
+
+This page exists for one reason: **"what exactly did installing this thing do to my project?"** shouldn't ever be a mystery. Everything below is a direct description of what the bundled `bin/postinstall.js` (and, for the one-command installer, `bin/create.js`) actually does, in the order it does it — every check, every file it can touch, and every message it can print. Nothing here is simplified away.
+
+The examples use `shane-new-doc`; `shane-new-post` runs the exact same sequence with different names swapped in (`new-post.js` instead of `new-doc.js`, `.shane-new-post.json` instead of `.shane-new-doc.json`, `astro` instead of `@astrojs/starlight` as the required dependency, `author` instead of `imgDir` as the one setup question). Differences are called out explicitly wherever they matter.
+
+## When this code runs at all
+
+`postinstall.js` is wired up as the package's `postinstall` lifecycle script in its own `package.json`:
+
+```json title="node_modules/shane-new-doc/package.json"
+{
+  "scripts": {
+    "postinstall": "node bin/postinstall.js"
+  }
+}
+```
+
+npm, pnpm, and yarn all run a dependency's `postinstall` script automatically right after that dependency finishes installing — this is a built-in package-manager feature, not something this project adds on its own. That also means it **won't** run if:
+
+- the install was run with `--ignore-scripts` (a common CI/security setting),
+- or the package manager blocks lifecycle scripts for new dependencies by default — **newer pnpm (v9/v10) does exactly this** unless the package is explicitly allow-listed via `pnpm approve-builds` or the `pnpm.onlyBuiltDependencies` field in `package.json` (see [Install & Quick Start](/en/cli/install/#option-2-manual-install)).
+
+If either of those applies, nothing in this whole page happens automatically — see [Verify the install](/en/cli/install/#verify-the-install) for how to trigger it by hand.
+
+## Step-by-step: what `postinstall.js` does
+
+<Steps>
+
+1. **Locate the real project root.** It reads `process.env.INIT_CWD` first, falling back to `process.cwd()`. `INIT_CWD` is set by npm/pnpm to the directory the install command was actually run from — necessary because the script itself physically lives inside `node_modules/shane-new-doc/bin/`, several folders away from the project it needs to modify.
+
+2. **Read the project's own `package.json`.** If it can't be found at all, the script exits immediately (`process.exit(0)`) and does nothing else — there's no project to configure.
+
+3. **Read an existing config file, if one is already there** — `.shane-new-doc.json` at the project root. This doesn't change anything yet; it's read early so the language-resolution step below can see a previously saved `"lang"` value.
+
+4. **Resolve which language to use for every message that follows.** In order, the first of these that matches wins:
+   - a `--lang=en` / `--lang=zh-cn` flag (or shorthand `--en` / `--zh` / `--zh-cn` / `--chinese` / `--english`) passed to *this* invocation,
+   - the `SHANE_CLI_LANG` environment variable,
+   - the `"lang"` field from the config file read in step 3,
+   - the OS/terminal locale, detected via `Intl.DateTimeFormat().resolvedOptions().locale`, falling back to the `$LC_ALL` / `$LANG` / `$LANGUAGE` environment variables.
+
+   **Only the locale guess (the last option) triggers an interactive prompt** — and only if `process.stdin.isTTY` is true. Every other source is treated as confident enough to skip asking. In a non-interactive install (CI, scripted, or piped) with no confident source, it silently falls back to the locale guess, or to English if even that fails.
+
+5. **Check whether this is the package's own repository.** If `pkg.name === "shane-new-doc"` (i.e. postinstall is running inside this package's own source checkout, e.g. during its own `pnpm install` in CI or local dev), it prints a skip message and exits immediately. This prevents the tool from ever generating files into its own repository.
+
+6. **Check whether the target project actually uses the matching framework.** For `shane-new-doc`, this means scanning `dependencies`, `devDependencies`, *and* `optionalDependencies` together for an `@astrojs/starlight` entry (`shane-new-post` checks for `astro` instead). If it's missing, a "not a Starlight project" message is printed and the script exits — **nothing else in this list happens**. This check exists because the generated script is hardcoded to Starlight's `src/content/docs/` layout and frontmatter shape; dropping it into an unrelated project would just be confusing dead weight.
+
+7. **Determine the scripts directory** — always `<project root>/scripts`.
+
+8. **Scan that directory for a same-purpose script that might already exist**, checking a fixed list of candidate filenames (case-sensitive, checked in this exact order):
+
+   ```
+   new-doc.js
+   new doc.js
+   new-docs.js
+   new docs.js
+   newdoc.js
+   newdocs.js
+   ```
+
+   (`shane-new-post`'s list is longer: `new-post.js`, `new post.js`, `new-blog.js`, `new blog.js`, `newpost.js`, `newblog.js`, `new posts.js`, `new-posts.js`, `newposts.js`, `new blogs.js`, `new-blogs.js`, `newblogs.js`.) The first name in the list that exists on disk is treated as the target — this matters if you already had, say, a hand-written `newdoc.js` before ever installing this package; it gets reused as the target filename instead of a second file being created alongside it.
+
+9. **Check whether that target file is already "managed" by this package.** It reads the first 200 characters of the file and looks for the literal marker string `// @generated by shane-new-doc`. If found:
+   - the script is **not touched again** (protecting any manual edits you've made to it since),
+   - but `package.json`'s `scripts` entry is still (re-)injected — see step 13 — since that part is safe to redo and might have been removed by hand,
+   - and the script then exits.
+
+   This is the mechanism that makes reinstalls/upgrades safe: the very first install generates and marks the file; every install after that leaves your edits alone.
+
+10. **If not already managed, ask the one remaining setup question** — for `shane-new-doc`, the image folder to use (default `public/img`); for `shane-new-post`, a default author name (default: empty, meaning the `author` frontmatter field is simply omitted from generated posts). This prompt is skipped automatically — falling back to the default — whenever `process.stdin.isTTY` is falsy, which covers most CI and scripted installs.
+
+11. **Write the script file** (`writeScript`):
+    - creates the `scripts/` directory if it doesn't exist yet, printing a message when it does,
+    - if a same-named file already exists at the target path (but isn't yet marked as managed — this only happens the very first time, on top of a pre-existing unrelated file), **backs it up** to `<name>.js.bak` before touching it,
+    - reads the bundled template from the package's own `bin/new-doc.js`,
+    - inserts the `// @generated by shane-new-doc` marker line **immediately after the shebang line** (`#!/usr/bin/env node`) — not before it, since a comment placed before the shebang would stop the file from being directly executable,
+    - writes the result to the target path in `scripts/`,
+    - prints either a "generated" or a "took over existing file" message depending on whether anything was overwritten.
+
+12. **Write the config file** (`writeConfig`) — `.shane-new-doc.json` at the project root, containing `{ "imgDir": ..., "lang": ... }`. **This step is skipped entirely if the config file already exists** — it never overwrites a config you (or an earlier install) already wrote, hand-edited or not.
+
+13. **Inject the npm script** (`injectPackageScript`) — adds `"new-doc": "node scripts/new-doc.js"` into `package.json`'s `"scripts"` object (the exact relative path to wherever the script actually landed in step 11), then rewrites `package.json` with 2-space indentation and a trailing newline. If that exact key/value pair is already present, this is a no-op — nothing is rewritten and no message is printed.
+
+</Steps>
+
+Every one of the steps above that prints something does so in whichever language step 4 resolved — the message text differs, the underlying logic never does.
+
+## Which existing filenames count as a match
+
+The full candidate lists from step 8, side by side:
+
+| `shane-new-doc` | `shane-new-post` |
+|---|---|
+| `new-doc.js` | `new-post.js` |
+| `new doc.js` | `new post.js` |
+| `new-docs.js` | `new-blog.js` |
+| `new docs.js` | `new blog.js` |
+| `newdoc.js` | `newpost.js` |
+| `newdocs.js` | `newblog.js` |
+| — | `new posts.js` |
+| — | `new-posts.js` |
+| — | `newposts.js` |
+| — | `new blogs.js` |
+| — | `new-blogs.js` |
+| — | `newblogs.js` |
+
+These exist purely to avoid creating a duplicate script next to one you already had with a near-identical name and purpose.
+
+## What the one-command installer adds on top
+
+Running `npm create shane-new-doc@latest` / `pnpm create shane-new-doc@latest` doesn't just run `postinstall.js` — it runs a separate wrapper script (`create-shane-new-doc`'s `index.js`) first, which does its own round of detection **before** the dependency is even installed:
+
+<Steps>
+1. **Resolves the language up front**, using the same flag → env var → TTY-guess order described in step 4 above (there's no saved config to check yet at this point, since nothing has installed). If resolved from a prompt or flag, it's forwarded to the real install via the `SHANE_CLI_LANG` environment variable, so `postinstall.js` doesn't have to ask again.
+2. **Scans the entire project tree** (excluding `node_modules` and `.git`, recursively) for any file matching the candidate names from the table above — not just inside a `scripts/`/`script/` folder, but anywhere in the project. Anything already carrying the `// @generated by...` marker is skipped (it's not a conflict, it's this package's own prior output). Every other match is flagged, and for each one you're asked, interactively, whether to delete it.
+3. **Requires a `package.json` to already exist** in the current directory — if it doesn't, the installer exits immediately with an error telling you to run the command from the project root instead.
+4. **Detects which package manager to use** for the actual install, in this order: the `npm_config_user_agent` environment variable (set automatically by npm/pnpm/yarn when they spawn a child process — checked for a `pnpm`/`yarn`/`npm` prefix), then falling back to whichever lockfile is present (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm), defaulting to pnpm if none of that matches anything.
+5. **Runs the real install** (`pnpm add shane-new-doc`, `npm install shane-new-doc --save`, or `yarn add shane-new-doc`, matching whichever manager was detected), streaming its output live. If the install process errors or exits with a non-zero status, the installer stops and reports the failure.
+6. **Double-checks that setup actually completed.** After the install finishes, it looks for a managed script (same marker check as step 9 above) in `scripts/` or `script/`. If none is found — meaning the package manager silently skipped the `postinstall` lifecycle script, which newer pnpm versions do by default — it runs `node node_modules/shane-new-doc/bin/postinstall.js` manually as a fallback, so the install is guaranteed to finish in a working state either way.
+7. **Prints a final confirmation** ("Initialization complete. Run: pnpm new-doc") once everything above has succeeded.
+</Steps>
+
+<Aside type="tip" title="This is why the one-command installer is recommended">
+A manual `npm install -D shane-new-doc` only gets you steps 1–13 from the postinstall walkthrough above — and only if your package manager actually ran the lifecycle script in the first place. The one-command installer additionally gets you the whole-project conflict scan, the automatic package-manager detection, and the guaranteed fallback re-run in step 6. If you went with manual install and are unsure whether everything landed correctly, see [Verify the install](/en/cli/install/#verify-the-install).
+</Aside>
+
+## A naming collision worth knowing about
+
+`shane-new-doc` itself (not the separate `create-shane-new-doc` package) also registers a *second* binary in its own `package.json`:
+
+```json title="node_modules/shane-new-doc/package.json"
+{
+  "bin": {
+    "new-doc": "bin/new-doc.js",
+    "create-shane-new-doc": "bin/create.js"
+  }
+}
+```
+
+That means once `shane-new-doc` is installed as a dependency, `node_modules/.bin/create-shane-new-doc` exists too — pointing at a **completely different, much smaller script** (`bin/create.js`) than the standalone `create-shane-new-doc` package covered above. This local one only asks for the image folder and, if you confirm, writes `.shane-new-doc.json` — it does **not** scan for conflicts, does **not** check for `@astrojs/starlight`, does **not** detect a package manager, and most importantly does **not** generate `scripts/new-doc.js` or touch `package.json`'s `scripts` at all.
+
+<Aside type="caution" title="These are not the same command, despite the identical name">
+Running `npm create shane-new-doc@latest` always fetches the real, standalone `create-shane-new-doc` package fresh from the registry — that's the one described in every step above, and it's the one you want. But if you already have `shane-new-doc` installed and separately try running `npx create-shane-new-doc` directly (without the `create` keyword), npx resolves local `node_modules/.bin` binaries before checking the registry, so it silently runs the *local, stripped-down* `bin/create.js` instead — which will leave you without a `scripts/new-doc.js` file at all. If `pnpm new-doc` still doesn't work after running something called "create-shane-new-doc", check which one actually ran, then follow [Verify the install](/en/cli/install/#verify-the-install) to finish the setup properly.
+</Aside>
+
+`shane-new-post` has the exact same setup — its own `bin/create.js` writes `.shane-new-post.json` (with `postsDir` and `author` fields) but likewise never generates `scripts/new-post.js`. Treat both local `bin/create.js` scripts as a minor, incomplete config-reset utility at most; for actually setting the project up, always go through `npm create shane-new-doc@latest` / `npm create shane-new-post@latest`, or the manual-install path in [Install & Quick Start](/en/cli/install/).
