@@ -6,7 +6,7 @@ sidebar:
 ---
 import { Tabs, TabItem, Steps, Aside, FileTree } from '@astrojs/starlight/components';
 
-Both tools (`shane-new-post` for blogs, `shane-new-doc` for docs sites) install the same way. The examples below use `shane-new-post` — swap in `shane-new-doc` for the other tool.
+Both tools (`shane-new-post` for blogs, `shane-new-doc` for docs sites) install the same way, just under a different package name. Both are shown explicitly below.
 
 ## Option 1: One-command installer (recommended)
 
@@ -15,12 +15,29 @@ Same pattern as `npm create astro@latest`. Run this from the project root (where
 <Tabs syncKey="package-manager">
 	<TabItem label="npm" icon="npm">
 		```bash
+		# shane-new-post (for blogs)
 		npm create shane-new-post@latest
+
+		# shane-new-doc (for docs sites)
+		npm create shane-new-doc@latest
 		```
 	</TabItem>
 	<TabItem label="pnpm" icon="pnpm">
 		```bash
+		# shane-new-post (for blogs)
 		pnpm create shane-new-post@latest
+
+		# shane-new-doc (for docs sites)
+		pnpm create shane-new-doc@latest
+		```
+	</TabItem>
+	<TabItem label="yarn" icon="yarn">
+		```bash
+		# shane-new-post (for blogs)
+		yarn create shane-new-post
+
+		# shane-new-doc (for docs sites)
+		yarn create shane-new-doc
 		```
 	</TabItem>
 </Tabs>
@@ -35,6 +52,8 @@ This handles everything automatically:
 
 During setup you're asked for a default author name (`shane-new-post` only — `shane-new-doc` has no author field, so it skips this: Starlight's default docs schema has no `author` key, and writing one in would fail schema validation). Leave it blank to omit the field entirely. Once setup finishes, the project looks like this:
 
+**`shane-new-post`:**
+
 <FileTree>
 - src/
   - content/
@@ -47,7 +66,19 @@ During setup you're asked for a default author name (`shane-new-post` only — `
 - package.json
 </FileTree>
 
-`pnpm new-post` / `pnpm new-doc` is ready to use immediately.
+**`shane-new-doc`:**
+
+<FileTree>
+- src/
+  - content/
+    - docs/
+- scripts/
+  - **new-doc.js**
+- .shane-new-doc.json saved language choice (no author field)
+- package.json
+</FileTree>
+
+`pnpm new-post` (or `npm run new-post` / `yarn new-post`) and `pnpm new-doc` (or `npm run new-doc` / `yarn new-doc`) are ready to use immediately.
 
 ### Choosing a language
 
@@ -67,17 +98,25 @@ To skip the prompt, pass a `--lang` flag up front:
 	<TabItem label="npm" icon="npm">
 		```bash
 		npm create shane-new-post@latest -- --lang=zh-cn
+		npm create shane-new-doc@latest -- --lang=zh-cn
 		```
 	</TabItem>
 	<TabItem label="pnpm" icon="pnpm">
 		```bash
 		pnpm create shane-new-post@latest --lang=zh-cn
+		pnpm create shane-new-doc@latest --lang=zh-cn
+		```
+	</TabItem>
+	<TabItem label="yarn" icon="yarn">
+		```bash
+		yarn create shane-new-post --lang=zh-cn
+		yarn create shane-new-doc --lang=zh-cn
 		```
 	</TabItem>
 </Tabs>
 
 <Aside type="tip" title="npm needs an extra --">
-With npm an extra `--` is needed before the flag so it gets passed through to the installer. pnpm doesn't need it.
+With npm an extra `--` is needed before the flag so it gets passed through to the installer. pnpm and yarn don't need it.
 </Aside>
 
 `--lang=en` also works, and so do the shorthands `--en` / `--zh` / `--zh-cn` / `--chinese` / `--english`.
@@ -101,13 +140,31 @@ The package can also be added as a dependency directly, without the installer:
 <Tabs syncKey="package-manager">
 	<TabItem label="npm" icon="npm">
 		```bash
+		# shane-new-post (for blogs)
 		npm install -D shane-new-post
+
+		# shane-new-doc (for docs sites)
+		npm install -D shane-new-doc
 		```
 	</TabItem>
 	<TabItem label="pnpm" icon="pnpm">
 		```bash
+		# shane-new-post (for blogs)
 		pnpm add -D shane-new-post
 		pnpm approve-builds
+
+		# shane-new-doc (for docs sites)
+		pnpm add -D shane-new-doc
+		pnpm approve-builds
+		```
+	</TabItem>
+	<TabItem label="yarn" icon="yarn">
+		```bash
+		# shane-new-post (for blogs)
+		yarn add -D shane-new-post
+
+		# shane-new-doc (for docs sites)
+		yarn add -D shane-new-doc
 		```
 	</TabItem>
 </Tabs>
@@ -115,10 +172,10 @@ The package can also be added as a dependency directly, without the installer:
 Both languages are bundled in the same package — installing `shane-new-post` or `shane-new-doc` gives English and Chinese prompts either way. See [Choosing a language](#choosing-a-language) above for how to pick one.
 
 <Aside type="caution" title="pnpm needs an extra approval step">
-pnpm v9 / v10 blocks a new dependency's install scripts by default. Run `pnpm approve-builds`, use the arrow keys to select `shane-new-post`, press space to check it, then enter to confirm. To skip this every time, add to the project's `package.json`:
+pnpm v9 / v10 blocks a new dependency's install scripts by default. Run `pnpm approve-builds`, use the arrow keys to select the package (`shane-new-post` or `shane-new-doc`), press space to check it, then enter to confirm. To skip this every time, add to the project's `package.json`:
 
 ```json
-"pnpm": { "onlyBuiltDependencies": ["shane-new-post"] }
+"pnpm": { "onlyBuiltDependencies": ["shane-new-post", "shane-new-doc"] }
 ```
 </Aside>
 
@@ -131,7 +188,7 @@ Whichever option you used, don't just trust that it worked — check two things 
 2. **`package.json` has a `new-post` (or `new-doc`) entry inside `"scripts"`**, pointing at the file that was generated under `scripts/`.
 </Steps>
 
-Most of the time both are already there and you can skip straight to [shane-new-post Guide](/en/cli/new-post/) or [shane-new-doc Guide](/en/cli/new-doc/). But some package managers — newer pnpm in particular — skip lifecycle scripts (`postinstall`) by default unless explicitly told otherwise, and a few CI/non-interactive installs run with `--ignore-scripts` set globally. In that situation the dependency gets added to `package.json`, but nothing under `scripts/` is ever generated and the `scripts` entry is never injected. The one-command installer (`npm create` / `pnpm create`) already re-checks for this and re-runs setup automatically when it detects that — see [Installation Internals](/en/cli/internals/) for exactly how. A **manual install** (Option 2 above) has no such fallback, so this is the case most likely to affect you.
+Most of the time both are already there and you can skip straight to [shane-new-post Guide](/en/cli/new-post/) or [shane-new-doc Guide](/en/cli/new-doc/). But some package managers — newer pnpm in particular — skip lifecycle scripts (`postinstall`) by default unless explicitly told otherwise, and a few CI/non-interactive installs run with `--ignore-scripts` set globally. In that situation the dependency gets added to `package.json`, but nothing under `scripts/` is ever generated and the `scripts` entry is never injected. The one-command installer (`npm create` / `pnpm create` / `yarn create`) already re-checks for this and re-runs setup automatically when it detects that — see [Installation Internals](/en/cli/internals/) for exactly how. A **manual install** (Option 2 above) has no such fallback, so this is the case most likely to affect you.
 
 If `scripts/new-post.js` (or `new-doc.js`) is missing, or `package.json` has no matching line, run the install script by hand once:
 
@@ -139,16 +196,27 @@ If `scripts/new-post.js` (or `new-doc.js`) is missing, or `package.json` has no 
 	<TabItem label="npm" icon="npm">
 		```bash
 		node node_modules/shane-new-post/bin/postinstall.js
+		# or
+		node node_modules/shane-new-doc/bin/postinstall.js
 		```
 	</TabItem>
 	<TabItem label="pnpm" icon="pnpm">
 		```bash
 		node node_modules/shane-new-post/bin/postinstall.js
+		# or
+		node node_modules/shane-new-doc/bin/postinstall.js
+		```
+	</TabItem>
+	<TabItem label="yarn" icon="yarn">
+		```bash
+		node node_modules/shane-new-post/bin/postinstall.js
+		# or
+		node node_modules/shane-new-doc/bin/postinstall.js
 		```
 	</TabItem>
 </Tabs>
 
-That performs the exact same steps postinstall always performs — nothing different, just triggered manually instead of automatically. If for some reason that file also doesn't exist (a very unusual install failure), add the line to `package.json` yourself. Before:
+This command doesn't depend on the package manager — the path is the same under all three, so any of them works. It performs the exact same steps postinstall always performs — nothing different, just triggered manually instead of automatically. If for some reason that file also doesn't exist (a very unusual install failure), add the line to `package.json` yourself. Before:
 
 ```json title="package.json"
 {
