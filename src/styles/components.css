@@ -1,0 +1,139 @@
+/* =====================
+   表格
+===================== */
+
+.sl-markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sl-markdown-content th,
+.sl-markdown-content td {
+  border: 1px solid var(--border-color);
+  padding: 0.5em 0.9em;
+}
+
+.sl-markdown-content th {
+  background: var(--sl-color-accent-low);
+  color: var(--title-color);
+  text-align: left;
+  font-weight: 600;
+}
+
+.sl-markdown-content tr:nth-child(even) td {
+  background: var(--sl-color-accent-low);
+}
+
+
+/* =====================
+   Badge 组件
+   Starlight 默认给每种 variant 配了对应颜色（note=蓝/tip=紫/danger=红...）
+   这里覆盖成同一套黑白灰调色，只用边框粗细/填充深浅区分，不用色相
+===================== */
+
+:root {
+  --sl-badge-default-border: var(--border-color);
+  --sl-badge-default-bg: var(--sl-color-accent-low);
+  --sl-badge-default-text: var(--title-color);
+
+  --sl-badge-note-border: var(--border-color);
+  --sl-badge-note-bg: var(--sl-color-accent-low);
+  --sl-badge-note-text: var(--title-color);
+
+  --sl-badge-tip-border: #888888;
+  --sl-badge-tip-bg: var(--sl-color-accent-low);
+  --sl-badge-tip-text: var(--title-color);
+
+  --sl-badge-caution-border: #666666;
+  --sl-badge-caution-bg: var(--hover-bg);
+  --sl-badge-caution-text: var(--title-color);
+
+  --sl-badge-danger-border: var(--title-color);
+  --sl-badge-danger-bg: var(--title-color);
+  --sl-badge-danger-text: var(--sl-color-bg);
+
+  --sl-badge-success-border: var(--border-color);
+  --sl-badge-success-bg: var(--sl-color-accent-low);
+  --sl-badge-success-text: var(--title-color);
+}
+
+.sl-badge {
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+
+/* =====================
+   Card 组件（<Card>，非链接）
+   Starlight 默认会按第几个卡片轮换紫/橙/绿/红/蓝的强调色，这里统一压成黑白灰
+===================== */
+
+.card {
+  --sl-card-border: var(--border-color) !important;
+  --sl-card-bg: var(--sl-color-bg) !important;
+  border-radius: 10px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--title-color) !important;
+  transform: translateY(-2px);
+}
+
+.card .title {
+  color: var(--title-color);
+}
+
+
+/* =====================
+   LinkCard 组件（<LinkCard>，真实类名是 .sl-link-card）
+===================== */
+
+.sl-link-card {
+  border-color: var(--border-color) !important;
+  border-radius: 10px;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.sl-link-card .title {
+  color: var(--title-color) !important;
+}
+
+.sl-link-card .description,
+.sl-link-card .icon {
+  color: var(--text-color) !important;
+}
+
+.sl-link-card:hover {
+  background: var(--hover-bg) !important;
+  border-color: var(--title-color) !important;
+  transform: translateY(-2px);
+}
+
+.sl-link-card:hover .icon {
+  color: var(--title-color) !important;
+}
+
+
+/* =====================
+   上一页 / 下一页 分页链接
+===================== */
+
+.pagination-links a {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pagination-links a:hover {
+  border-color: var(--title-color);
+  background: var(--hover-bg);
+}
+
+.pagination-links .link-title {
+  color: var(--title-color);
+}

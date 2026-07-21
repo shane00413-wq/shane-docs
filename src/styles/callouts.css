@@ -1,0 +1,61 @@
+/* =====================
+   提示框 Aside（note / tip / caution / danger）
+   真实结构：
+   <aside class="starlight-aside starlight-aside--tip">
+     <p class="starlight-aside__title">...(含图标 svg)...</p>
+     <div class="starlight-aside__content">...</div>
+   </aside>
+   黑白灰主题下，用图标 + 左边框粗细/线型区分类型，而不是靠颜色
+===================== */
+
+.starlight-aside {
+  border: 1px solid var(--border-color);
+  background: var(--sl-color-accent-low);
+  border-left-width: 4px;
+  border-radius: 8px;
+  color: var(--text-color);
+}
+
+.starlight-aside__title {
+  color: var(--title-color);
+  font-weight: 600;
+}
+
+.starlight-aside__title svg {
+  color: var(--title-color);
+}
+
+/* note：细实线，最不打扰的一种 */
+.starlight-aside--note {
+  border-left-style: solid;
+  border-left-color: var(--border-color);
+}
+
+/* tip：虚线，暗示"这是个可选的小技巧" */
+.starlight-aside--tip {
+  border-left-style: dashed;
+  border-left-color: #888888;
+}
+
+/* caution：加粗实线 */
+.starlight-aside--caution {
+  border-left-style: solid;
+  border-left-width: 6px;
+  border-left-color: #666666;
+}
+
+/* danger：最粗 + 底色略深一档，视觉权重最高 */
+.starlight-aside--danger {
+  border-left-style: solid;
+  border-left-width: 6px;
+  border-left-color: var(--title-color);
+  background: var(--hover-bg);
+}
+
+[data-theme="dark"] .starlight-aside--tip {
+  border-left-color: #aaaaaa;
+}
+
+[data-theme="dark"] .starlight-aside--caution {
+  border-left-color: #bbbbbb;
+}

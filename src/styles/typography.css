@@ -1,0 +1,68 @@
+/* =====================
+   行内代码
+===================== */
+
+.sl-markdown-content :not(pre) > code {
+  background: var(--sl-color-accent-low);
+  color: var(--title-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.15em 0.4em;
+  font-size: 0.875em;
+}
+
+
+/* =====================
+   引用块
+===================== */
+
+.sl-markdown-content blockquote {
+  border-left: 3px solid var(--border-color);
+  color: var(--text-color);
+  background: var(--sl-color-accent-low);
+  border-radius: 0 8px 8px 0;
+  padding: 0.6em 1em;
+}
+
+.sl-markdown-content blockquote p {
+  margin: 0;
+}
+
+
+/* =====================
+   分隔线
+===================== */
+
+.sl-markdown-content hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 2rem 0;
+}
+
+
+/* =====================
+   键盘按键 <kbd>
+===================== */
+
+.sl-markdown-content kbd {
+  background: var(--sl-color-accent-low);
+  border: 1px solid var(--border-color);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 0.1em 0.5em;
+  font-size: 0.85em;
+  font-family: var(--sl-font-mono, monospace);
+  color: var(--title-color);
+}
+
+
+/* =====================
+   高亮 <mark>
+===================== */
+
+.sl-markdown-content mark {
+  background: var(--hover-bg);
+  color: var(--title-color);
+  border-radius: 3px;
+  padding: 0 0.2em;
+}

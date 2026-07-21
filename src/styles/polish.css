@@ -1,0 +1,70 @@
+/* =====================
+   文字选中颜色
+===================== */
+
+::selection {
+  background: var(--title-color);
+  color: var(--sl-color-bg);
+}
+
+
+/* =====================
+   自定义滚动条（Webkit）
+===================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 999px;
+  border: 2px solid var(--sl-color-bg);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hover-bg);
+  background-clip: padding-box;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+
+/* =====================
+   锚点跳转留出顶部间距，避免被固定头挡住
+===================== */
+
+.sl-markdown-content :is(h1, h2, h3, h4)[id] {
+  scroll-margin-top: 5rem;
+}
+
+
+/* =====================
+   平滑滚动 + 尊重"减少动态效果"系统设置
+===================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

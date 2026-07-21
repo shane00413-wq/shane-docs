@@ -1,0 +1,71 @@
+/* =====================
+   顶部导航栏
+===================== */
+
+.header {
+  background-color: var(--sl-color-bg);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
+}
+
+.header a:hover {
+  color: var(--title-color);
+}
+
+
+/* =====================
+   左侧侧边栏容器（导航栏本体已在 custom.css 里配过颜色，这里补边框细节）
+===================== */
+
+.sidebar {
+  border-right: 1px solid var(--border-color);
+}
+
+
+/* =====================
+   右侧目录 TOC
+===================== */
+
+.right-sidebar {
+  border-inline-start: 1px solid var(--border-color);
+}
+
+.right-sidebar nav a {
+  color: var(--text-color);
+  border-inline-start: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.right-sidebar nav a:hover {
+  color: var(--title-color);
+}
+
+/* 当前所在标题高亮（Starlight 用 aria-current 标记当前目录项） */
+.right-sidebar nav a[aria-current="true"] {
+  color: var(--title-color);
+  border-inline-start-color: var(--title-color);
+  font-weight: 600;
+}
+
+
+/* =====================
+   社交图标（GitHub 链接等）
+===================== */
+
+.social-icons a {
+  color: var(--text-color);
+  transition: color 0.15s ease;
+}
+
+.social-icons a:hover {
+  color: var(--title-color);
+}
+
+
+/* =====================
+   移动端汉堡菜单按钮
+===================== */
+
+.menu-toggle {
+  color: var(--text-color);
+}

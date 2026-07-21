@@ -1,0 +1,108 @@
+/* =====================
+   代码块外观深度定制（Expressive Code）
+   只调整"外壳"：圆角、边框、标签页、终端标题栏、复制按钮、滚动条
+   语法高亮的颜色（关键字/字符串等）保持原样，不在这里改
+===================== */
+
+:root {
+  /* 整体形状 */
+  --ec-brdRad: 10px;
+  --ec-brdWd: 1px;
+  --ec-brdCol: var(--border-color);
+  --ec-uiPadInl: 1rem;
+  --ec-focusBrd: var(--title-color);
+
+  /* 代码区域背景 */
+  --ec-codeBg: var(--sidebar-bg);
+  --ec-frm-edBg: var(--sidebar-bg);
+  --ec-frm-frameBoxShdCssVal: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --ec-frm-shdCol: transparent;
+
+  /* 有文件名的标签页（.frame.has-title） */
+  --ec-frm-edActTabBg: var(--sl-color-bg);
+  --ec-frm-edActTabFg: var(--title-color);
+  --ec-frm-edActTabBrdCol: var(--border-color);
+  --ec-frm-edActTabIndTopCol: var(--title-color);
+  --ec-frm-edActTabIndBtmCol: transparent;
+  --ec-frm-edTabBarBg: var(--sidebar-bg);
+  --ec-frm-edTabBarBrdCol: var(--border-color);
+  --ec-frm-edTabBarBrdBtmCol: var(--border-color);
+
+  /* 终端窗口（bash/sh 代码块，.frame.is-terminal）
+     标题栏用反色，营造"真终端"的感觉——浅色模式下是深色条，深色模式下会自动变浅色条 */
+  --ec-frm-trmTtbBg: var(--title-color);
+  --ec-frm-trmTtbFg: var(--sl-color-bg);
+  --ec-frm-trmTtbDotsFg: var(--sl-color-bg);
+  --ec-frm-trmTtbDotsOpa: 0.5;
+  --ec-frm-trmTtbBrdBtmCol: var(--border-color);
+  --ec-frm-trmBg: var(--sidebar-bg);
+
+  /* 复制按钮 */
+  --ec-frm-inlBtnFg: var(--title-color);
+  --ec-frm-inlBtnBg: var(--title-color);
+  --ec-frm-inlBtnBrd: var(--title-color);
+  --ec-frm-tooltipSuccessBg: var(--title-color);
+  --ec-frm-tooltipSuccessFg: var(--sl-color-bg);
+
+  /* 代码块内部滚动条 */
+  --ec-sbThumbCol: var(--border-color);
+  --ec-sbThumbHoverCol: var(--hover-bg);
+}
+
+[data-theme="dark"] {
+  --ec-codeBg: var(--sidebar-bg);
+  --ec-frm-edBg: var(--sidebar-bg);
+  --ec-frm-edActTabBg: var(--sl-color-bg);
+  --ec-frm-edTabBarBg: var(--sidebar-bg);
+  --ec-frm-trmBg: var(--sidebar-bg);
+  --ec-frm-frameBoxShdCssVal: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+
+/* =====================
+   Tabs / TabItem 组件（切 npm / pnpm 用的那个）
+===================== */
+
+starlight-tabs .tablist-wrapper {
+  border-bottom: 1px solid var(--border-color);
+}
+
+starlight-tabs [role="tab"] {
+  color: var(--text-color);
+}
+
+starlight-tabs [role="tab"][aria-selected="true"] {
+  color: var(--title-color);
+  border-color: var(--title-color) !important;
+}
+
+
+/* =====================
+   Steps 组件（有序步骤列表）
+===================== */
+
+.sl-steps > li::before {
+  background: var(--sl-color-accent-low);
+  border: 1px solid var(--border-color);
+  color: var(--title-color);
+}
+
+.sl-steps {
+  border-inline-start: 1px solid var(--border-color);
+}
+
+
+/* =====================
+   FileTree 组件
+===================== */
+
+starlight-file-tree {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--sidebar-bg);
+}
+
+starlight-file-tree .highlight {
+  background-color: var(--title-color);
+  color: var(--sl-color-bg);
+}
