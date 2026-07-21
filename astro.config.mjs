@@ -6,6 +6,10 @@ import sidebar from './sidebar.config.js';
 export default defineConfig({
   site: 'https://shane-docs.pages.dev',
 
+  redirects: {
+    '/': '/en/',
+  },
+
   integrations: [
     starlight({
       title: 'Shane Docs',
