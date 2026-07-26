@@ -179,6 +179,10 @@ pnpm v9 / v10 blocks a new dependency's install scripts by default. Run `pnpm ap
 ```
 </Aside>
 
+<Aside type="note" title="yarn usually doesn't need anything special">
+Classic yarn (v1) runs a dependency's `postinstall` script automatically — no approval step needed. If the project uses Yarn Berry (v2+, especially with PnP mode), lifecycle script execution can behave differently; check the project's own yarn configuration.
+</Aside>
+
 ## Verify the install
 
 Whichever option you used, don't just trust that it worked — check two things in the project root.
@@ -254,9 +258,7 @@ After — one line added inside `"scripts"`, everything else untouched:
 ```
 
 <Aside type="note" title="Path must match where the script actually landed">
-The value is always `node scripts/<name>.js`, using whatever filename actually exists in your `scripts/` folder — this is normally `new-doc.js` / `new-post.js`, but if your project already had a similarly-named script before installing (see the candidate-name list in [Installation Internals](/en/cli/internals/#which-existing-filenames-count-as-a-match)), the generator reuses *that* filename instead of creating a second file. Check what's actually inside `scripts/` before typing the line in by hand.
+The value is always `node scripts/<n>.js`, using whatever filename actually exists in your `scripts/` folder — this is normally `new-doc.js` / `new-post.js`, but if your project already had a similarly-named script before installing (see the candidate-name list in [Installation Internals](/en/cli/internals/#which-existing-filenames-count-as-a-match)), the generator reuses *that* filename instead of creating a second file. Check what's actually inside `scripts/` before typing the line in by hand.
 </Aside>
 
 For `shane-new-post`, the equivalent line is `"new-post": "node scripts/new-post.js"` — same idea, different key and path.
-
-
