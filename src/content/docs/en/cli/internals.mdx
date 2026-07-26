@@ -33,7 +33,11 @@ If either of those applies, nothing in this whole page happens automatically —
 
 <Steps>
 
-1. **Locate the real project root.** It reads `process.env.INIT_CWD` first, falling back to `process.cwd()`. `INIT_CWD` is set by npm/pnpm to the directory the install command was actually run from — necessary because the script itself physically lives inside `node_modules/shane-new-doc/bin/`, several folders away from the project it needs to modify.
+1. **Locate the real project root.** It reads `process.env.INIT_CWD` first, falling back to `process.cwd()`. `INIT_CWD` is set by npm and pnpm to the directory the install command was actually run from — necessary because the script itself physically lives inside `node_modules/shane-new-doc/bin/`, several folders away from the project it needs to modify.
+
+<Aside type="note" title="Yarn and INIT_CWD">
+Classic Yarn (v1) does **not** reliably set `INIT_CWD` for lifecycle scripts the way npm and pnpm do. In practice this rarely matters here — the `process.cwd()` fallback already points at the project root in the vast majority of setups — but in an unusual layout (e.g. a monorepo workspace) it could resolve to a different directory under classic Yarn than under npm/pnpm. Yarn Berry (v2+) does define `$INIT_CWD` correctly. If something lands in the wrong place under Yarn, this is the first thing to check.
+</Aside>
 
 2. **Read the project's own `package.json`.** If it can't be found at all, the script exits immediately (`process.exit(0)`) and does nothing else — there's no project to configure.
 
