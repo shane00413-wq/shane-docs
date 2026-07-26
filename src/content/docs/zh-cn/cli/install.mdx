@@ -6,7 +6,7 @@ sidebar:
 ---
 import { Tabs, TabItem, Steps, Aside, FileTree } from '@astrojs/starlight/components';
 
-两个工具（`shane-new-post` 给博客用，`shane-new-doc` 给文档站用）安装方式完全一样，只是包名不同。一键安装器的命令下面两个都给了；手动安装等其它地方统一用 `shane-new-post` 举例，把命令里的名字换成 `shane-new-doc` 就是另一个工具的用法。
+两个工具（`shane-new-post` 给博客用，`shane-new-doc` 给文档站用）安装方式完全一样，只是包名不同，下面每个命令都两个包一起给出。
 
 ## 方式一：一键安装器（推荐）
 
@@ -140,13 +140,31 @@ npm 需要在参数前面加一个额外的 `--` 才能把 `--lang` 透传给安
 <Tabs syncKey="package-manager">
 	<TabItem label="npm" icon="npm">
 		```bash
+		# shane-new-post（博客用）
 		npm install -D shane-new-post
+
+		# shane-new-doc（文档站用）
+		npm install -D shane-new-doc
 		```
 	</TabItem>
 	<TabItem label="pnpm" icon="pnpm">
 		```bash
+		# shane-new-post（博客用）
 		pnpm add -D shane-new-post
 		pnpm approve-builds
+
+		# shane-new-doc（文档站用）
+		pnpm add -D shane-new-doc
+		pnpm approve-builds
+		```
+	</TabItem>
+	<TabItem label="yarn" icon="yarn">
+		```bash
+		# shane-new-post（博客用）
+		yarn add -D shane-new-post
+
+		# shane-new-doc（文档站用）
+		yarn add -D shane-new-doc
 		```
 	</TabItem>
 </Tabs>
@@ -154,11 +172,15 @@ npm 需要在参数前面加一个额外的 `--` 才能把 `--lang` 透传给安
 两种语言都打包在同一个包里——不管装 `shane-new-post` 还是 `shane-new-doc`，中英文提示都在。怎么选语言见上面的[选择语言](#选择语言)一节。
 
 <Aside type="caution" title="pnpm 需要额外批准安装脚本">
-pnpm v9 / v10 默认会拦截新依赖的安装脚本（`postinstall`）。执行 `pnpm approve-builds`，方向键选中 `shane-new-post`，按空格勾选，回车确认即可。想以后都不用手动批准，可以在项目的 `package.json` 里加：
+pnpm v9 / v10 默认会拦截新依赖的安装脚本（`postinstall`）。执行 `pnpm approve-builds`，方向键选中对应的包名（`shane-new-post` 或 `shane-new-doc`），按空格勾选，回车确认即可。想以后都不用手动批准，可以在项目的 `package.json` 里加：
 
 ```json
-"pnpm": { "onlyBuiltDependencies": ["shane-new-post"] }
+"pnpm": { "onlyBuiltDependencies": ["shane-new-post", "shane-new-doc"] }
 ```
+</Aside>
+
+<Aside type="note" title="yarn 一般不用管这个">
+经典 yarn（v1）安装时会自动执行依赖的 `postinstall` 脚本，不需要额外批准。如果项目用的是 Yarn Berry（v2 及以上，尤其开了 PnP 模式），生命周期脚本的执行方式可能不一样，具体以项目自己的 yarn 配置为准。
 </Aside>
 
 ## 验证是否装成功
@@ -178,16 +200,27 @@ pnpm v9 / v10 默认会拦截新依赖的安装脚本（`postinstall`）。执�
 	<TabItem label="npm" icon="npm">
 		```bash
 		node node_modules/shane-new-post/bin/postinstall.js
+		# 或者
+		node node_modules/shane-new-doc/bin/postinstall.js
 		```
 	</TabItem>
 	<TabItem label="pnpm" icon="pnpm">
 		```bash
 		node node_modules/shane-new-post/bin/postinstall.js
+		# 或者
+		node node_modules/shane-new-doc/bin/postinstall.js
+		```
+	</TabItem>
+	<TabItem label="yarn" icon="yarn">
+		```bash
+		node node_modules/shane-new-post/bin/postinstall.js
+		# 或者
+		node node_modules/shane-new-doc/bin/postinstall.js
 		```
 	</TabItem>
 </Tabs>
 
-这跟 postinstall 平时自动执行的步骤完全一样——没有任何区别，只是从"自动触发"变成"手动触发"而已。如果连这个文件都不存在（属于非常少见的安装失败），那就自己动手把那一行加进 `package.json`。加之前：
+这条命令跟包管理器无关——三种包管理器下路径都一样，用哪个都行。这跟 postinstall 平时自动执行的步骤完全一样——没有任何区别，只是从"自动触发"变成"手动触发"而已。如果连这个文件都不存在（属于非常少见的安装失败），那就自己动手把那一行加进 `package.json`。加之前：
 
 ```json title="package.json"
 {
@@ -229,5 +262,3 @@ pnpm v9 / v10 默认会拦截新依赖的安装脚本（`postinstall`）。执�
 </Aside>
 
 对 `shane-new-post` 来说，对应的那一行是 `"new-post": "node scripts/new-post.js"`——道理一样，键名和路径不同。
-
-
