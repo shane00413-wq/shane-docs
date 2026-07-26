@@ -14,7 +14,15 @@ export default defineConfig({
     starlight({
       title: 'Shane Docs',
 
-      customCss: ['./src/styles/custom.css'],
+      customCss: [
+        './src/styles/custom.css',
+        './src/styles/typography.css',
+        './src/styles/callouts.css',
+        './src/styles/polish.css',
+        './src/styles/components.css',
+        './src/styles/layout.css',
+        './src/styles/code-blocks.css',
+      ],
 
       components: {
         SocialIcons: './src/components/SocialIcons.astro',
