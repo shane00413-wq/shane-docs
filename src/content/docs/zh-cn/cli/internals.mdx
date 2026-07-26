@@ -33,7 +33,11 @@ npm、pnpm、yarn 都会在一个依赖装完之后**自动**执行它自己的 
 
 <Steps>
 
-1. **确定项目真实的根目录。** 先读 `process.env.INIT_CWD`，读不到再退回 `process.cwd()`。之所以要用 `INIT_CWD`，是因为这个脚本本身其实躺在 `node_modules/shane-new-doc/bin/` 里面，离它要修改的项目根目录隔了好几层，而 npm/pnpm 会把用户实际执行安装命令时所在的目录设置进这个环境变量。
+1. **确定项目真实的根目录。** 先读 `process.env.INIT_CWD`，读不到再退回 `process.cwd()`。之所以要用 `INIT_CWD`，是因为这个脚本本身其实躺在 `node_modules/shane-new-doc/bin/` 里面，离它要修改的项目根目录隔了好几层，而 npm 和 pnpm 会把用户实际执行安装命令时所在的目录设置进这个环境变量。
+
+<Aside type="note" title="yarn 和 INIT_CWD 的一个坑">
+经典 yarn（v1）并不会像 npm、pnpm 那样可靠地给生命周期脚本设置 `INIT_CWD`。实际影响不大——绝大多数项目结构下 `process.cwd()` 这个兜底值本身就是项目根目录——但如果项目结构比较特殊（比如 monorepo workspace），经典 yarn 下解析出来的目录就可能和 npm/pnpm 下不一样。Yarn Berry（v2 及以上）会正确设置 `$INIT_CWD`。如果用 yarn 装完之后文件生成的位置不对，这是第一个该排查的地方。
+</Aside>
 
 2. **读取项目自己的 `package.json`。** 如果压根找不到这个文件，脚本立刻退出（`process.exit(0)`），后面什么都不做——没有项目可配置。
 
