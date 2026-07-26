@@ -33,11 +33,7 @@ npm、pnpm、yarn 都会在一个依赖装完之后**自动**执行它自己的 
 
 <Steps>
 
-1. **确定项目真实的根目录。** 先读 `process.env.INIT_CWD`，读不到再退回 `process.cwd()`。之所以要用 `INIT_CWD`，是因为这个脚本本身其实躺在 `node_modules/shane-new-doc/bin/` 里面，离它要修改的项目根目录隔了好几层，而 npm 和 pnpm 会把用户实际执行安装命令时所在的目录设置进这个环境变量。
-
-<Aside type="note" title="yarn 和 INIT_CWD 的一个坑">
-经典 yarn（v1）并不会像 npm、pnpm 那样可靠地给生命周期脚本设置 `INIT_CWD`。实际影响不大——绝大多数项目结构下 `process.cwd()` 这个兜底值本身就是项目根目录——但如果项目结构比较特殊（比如 monorepo workspace），经典 yarn 下解析出来的目录就可能和 npm/pnpm 下不一样。Yarn Berry（v2 及以上）会正确设置 `$INIT_CWD`。如果用 yarn 装完之后文件生成的位置不对，这是第一个该排查的地方。
-</Aside>
+1. **确定项目真实的根目录。** 先读 `process.env.INIT_CWD`，读不到再退回 `process.cwd()`。之所以要用 `INIT_CWD`，是因为这个脚本本身其实躺在 `node_modules/shane-new-doc/bin/` 里面，离它要修改的项目根目录隔了好几层，而 npm 和 pnpm 会把用户实际执行安装命令时所在的目录设置进这个环境变量。（经典 yarn v1 在这一点上不太可靠，见这份列表后面的提示。）
 
 2. **读取项目自己的 `package.json`。** 如果压根找不到这个文件，脚本立刻退出（`process.exit(0)`），后面什么都不做——没有项目可配置。
 
@@ -92,6 +88,10 @@ npm、pnpm、yarn 都会在一个依赖装完之后**自动**执行它自己的 
 13. **注入 npm script**（`injectPackageScript` 函数）——往 `package.json` 的 `"scripts"` 对象里加一条 `"new-doc": "node scripts/new-doc.js"`（路径是第 11 步脚本实际落地位置的相对路径），然后用 2 空格缩进、末尾带换行符的格式重写整个 `package.json`。如果这个键值对已经原样存在，这一步就什么都不做——不会重写文件，也不会打印提示。
 
 </Steps>
+
+<Aside type="note" title="yarn 和 INIT_CWD 的一个坑（对应第 1 步）">
+经典 yarn（v1）并不会像 npm、pnpm 那样可靠地给生命周期脚本设置 `INIT_CWD`。实际影响不大——绝大多数项目结构下 `process.cwd()` 这个兜底值本身就是项目根目录——但如果项目结构比较特殊（比如 monorepo workspace），经典 yarn 下解析出来的目录就可能和 npm/pnpm 下不一样。Yarn Berry（v2 及以上）会正确设置 `$INIT_CWD`。如果用 yarn 装完之后文件生成的位置不对，这是第一个该排查的地方。
+</Aside>
 
 以上每一步涉及打印提示的地方，用的都是第 4 步判定出来的语言——提示文字会变，但底层逻辑本身永远一样。
 
