@@ -1,0 +1,57 @@
+---
+title: "Intel 与 AMD（Mesa）图形在 Ubuntu 上的使用"
+description: "如何验证 Mesa/驱动状态、安装诊断工具，并在必要时安全地更新 Mesa。" 
+sidebar:
+  order: 26
+---
+import { Aside, Steps, CardGrid, Card } from '@astrojs/starlight/components';
+
+Intel 与 AMD GPU 通常使用开源的 Mesa。本文说明如何检查渲染器、安装工具以及在必要时谨慎更新 Mesa。
+
+## 1 检查渲染器与驱动
+
+```bash
+sudo apt install -y mesa-utils
+glxinfo | grep "OpenGL renderer"
+lspci -k | grep -A3 -i "VGA\|3D"
+```
+
+若输出显示 `llvmpipe` 或 `software rasterizer`，则表示未启用硬件加速，需要进一步排查。
+
+## 2 常用包
+
+安装 Mesa 与诊断工具：
+
+```bash
+sudo apt update
+sudo apt install -y mesa-utils libgl1-mesa-dri libglx-mesa0
+```
+
+## 3 何时更新 Mesa
+
+仅在确需新特性或修复且 Ubuntu 自带版本不足时，才考虑从可信源更新 Mesa。常见第三方 PPA 包括 `oibaf` 与 `kisak`，但可能带来不稳定性。
+
+示例（自行承担风险）：
+
+```bash
+sudo add-apt-repository ppa:oibaf/graphics-drivers -y
+sudo apt update
+sudo apt upgrade -y
+```
+
+回退：移除 PPA 并使用 `ppa-purge` 回退包版本。
+
+## 4 排错
+
+<Steps>
+- 若出现 `llvmpipe`，检查 DRM 驱动与 DRI 模块（`lsmod | grep drm` 和 `dmesg | grep -i drm`）。
+- 确认 `xserver-xorg-video-*` 包不会冲突；现代栈更依赖 Mesa DRI。
+- 在 Wayland 环境下，查看合成器日志（例如 GNOME/Wayland 的 `journalctl -b`）。
+</Steps>
+
+<Aside type="note" title="诊断卡片">
+  <CardGrid>
+    <Card title="检查加速" description="`glxinfo` 显示硬件加速是否启用。"/>
+    <Card title="驱动信息" description="使用 `lspci -k` 查看内核模块的使用情况。"/>
+  </CardGrid>
+</Aside>

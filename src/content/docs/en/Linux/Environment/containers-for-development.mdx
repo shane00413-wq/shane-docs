@@ -1,0 +1,40 @@
+---
+title: "Using Containers for Development"
+description: "How containers (Docker, Podman) can isolate development environments, simplify reproducible builds, and speed up CI workflows."
+sidebar:
+  order: 16
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Containers create lightweight, reproducible environments for building and testing code. They are especially useful when a project depends on specific toolchain versions or services.
+
+## Quick example: Dockerfile for a C build
+
+```dockerfile
+FROM ubuntu:24.04
+RUN apt update && apt install -y build-essential cmake git
+WORKDIR /src
+COPY . /src
+RUN mkdir -p build && cd build && cmake .. && cmake --build .
+```
+
+Run a container and mount the source directory for iterative development:
+
+```bash
+docker build -t myproj:dev .
+docker run --rm -it -v "$PWD":/src -w /src myproj:dev bash
+```
+
+## Podman and rootless containers
+
+Podman is a drop-in replacement for Docker on many systems and supports rootless containers by default. Use the same `Dockerfile` with `podman build` and `podman run`.
+
+<Steps>
+- Use container images as repeatable CI builders.
+- Use volume mounts for fast edit/build cycles during development.
+- Keep container images minimal and cache-friendly to speed builds.
+</Steps>
+
+<Aside type="note" title="Security and networking">
+Be mindful of exposed ports and bind mounts. For production, follow your container runtime's best practices for user permissions and secrets handling.
+</Aside>

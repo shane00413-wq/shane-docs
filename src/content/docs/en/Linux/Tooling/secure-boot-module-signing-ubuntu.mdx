@@ -1,0 +1,65 @@
+---
+title: "Signing Kernel Modules for Secure Boot on Ubuntu"
+description: "How to create a Machine-Owner Key (MOK), sign modules, enroll the key, and verify signed modules load under Secure Boot." 
+sidebar:
+  order: 25
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+When Secure Boot is enabled, unsigned kernel modules will be refused. This guide explains generating a key, signing modules, enrolling the key with `mokutil`, and verifying the process.
+
+## 1 Install necessary tools
+
+```bash
+sudo apt update
+sudo apt install -y mokutil openssl kmod
+```
+
+## 2 Generate a keypair and enroll
+
+```bash
+sudo openssl req -new -x509 -newkey rsa:2048 -keyout /root/MOK.priv -out /root/MOK.pem -nodes -days 3650 -subj "/CN=Custom MOK/"
+sudo chmod 600 /root/MOK.priv
+sudo mokutil --import /root/MOK.pem
+```
+
+You will be prompted to set a password. Reboot and use the MOK manager UI to enroll the key using the password.
+
+## 3 Sign a module
+
+Identify the module file (example `/lib/modules/$(uname -r)/extra/yourmod.ko`) then use the kernel `scripts/sign-file` utility:
+
+```bash
+sudo /usr/src/linux-headers-$(uname -r)/scripts/sign-file sha256 /root/MOK.priv /root/MOK.pem /lib/modules/$(uname -r)/kernel/drivers/misc/yourmod.ko
+sudo depmod -a
+sudo modprobe yourmod
+```
+
+If the module loads successfully, `dmesg` will show the module initialization messages.
+
+## 4 Verify signature
+
+Use `modinfo` to check signature details (some modules expose signature info):
+
+```bash
+modinfo yourmod | grep signer
+```
+
+Alternatively, check `dmesg` or `journalctl -k` for module signature acceptance messages.
+
+## 5 Automate signing for DKMS
+
+DKMS can be configured to sign modules after build by adding a `post_install` script that calls the `sign-file` utility. Ensure the signing key is available and MOK is enrolled on the machine.
+
+## 6 Troubleshooting
+
+<Steps>
+- If a module is rejected, check `dmesg | grep -i 'sig'` and `journalctl -k` for signature errors.
+- Confirm the MOK was enrolled successfully in firmware.
+- Ensure the `sign-file` path is correct for your headers package; on Ubuntu it is usually under `/usr/src/linux-headers-$(uname -r)/scripts/`.
+- If you cannot enroll MOK (headless servers), consider using a remote KVM or temporarily disabling Secure Boot to install necessary drivers, then re-enable after signing.
+</Steps>
+
+<Aside type="note" title="Security reminder">
+Keep the private key (`/root/MOK.priv`) secure. Anyone with this key can sign modules that will be accepted by your system while Secure Boot trusts the corresponding public key.
+</Aside>

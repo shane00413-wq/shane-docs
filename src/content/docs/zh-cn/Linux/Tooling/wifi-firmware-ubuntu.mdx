@@ -1,0 +1,87 @@
+---
+title: "Ubuntu 上的 Wi‑Fi 固件与驱动"
+description: "检测无线硬件、安装厂商固件（Intel、Broadcom）、启用接口并排查连接问题的逐步指南。"
+sidebar:
+  order: 23
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+本文重点介绍常见 Wi‑Fi 芯片及其固件在 Ubuntu 上的处理：检测、安装固件包、使用 modprobe 重载模块与实用排错命令。
+
+## 1 检测无线硬件
+
+```bash
+lspci -nnk | grep -i network -A3
+lsusb
+iw dev
+```
+
+查找包含 `Intel Corporation Wireless` 或 `Broadcom` 的条目。
+
+## 2 Intel（iwlwifi）固件
+
+安装 Intel 固件并重载模块：
+
+```bash
+sudo apt update
+sudo apt install -y linux-firmware-iwlwifi
+sudo modprobe -r iwlwifi && sudo modprobe iwlwifi
+```
+
+查看内核日志确认固件加载：
+
+```bash
+dmesg | grep -i iwl
+journalctl -k | tail -n 50
+```
+
+若固件文件缺失，`dmesg` 会显示具体文件名（例如 `iwlwifi-ty-a0-gf-a0-59.ucode`），可从 `linux-firmware` 包或厂商源获取。
+
+## 3 Broadcom
+
+Broadcom 芯片根据型号需不同驱动，常见包：
+
+- `bcmwl-kernel-source` — Broadcom STA（闭源），适用于部分芯片
+- `firmware-brcm80211` 或包含在 `linux-firmware` 中 — 适用于部分 brcm 芯片
+
+安装 STA 驱动（若建议使用）：
+
+```bash
+sudo apt update
+sudo apt install -y bcmwl-kernel-source
+sudo modprobe -r b43 bcma wl && sudo modprobe wl
+```
+
+若接口未出现，请查看 `dmesg` 的固件相关信息。
+
+## 4 启用与连接
+
+使用 NetworkManager：
+
+```bash
+nmcli device status
+nmcli device wifi list
+nmcli device wifi connect "SSID" password "yourpass"
+```
+
+使用 `wpa_supplicant`（手动）：创建 `/etc/wpa_supplicant/wpa_supplicant.conf`，然后：
+
+```bash
+sudo wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
+sudo dhclient wlan0
+```
+
+## 5 排错清单
+
+<Steps>
+- 检查 rfkill：`rfkill list all` — 用 `sudo rfkill unblock all` 解除阻塞。
+- 内核消息：`dmesg | grep -i firmware`。
+- 接口状态：`ip link`、`iw dev`、`nmcli device status`。
+- 日志：`journalctl -u NetworkManager -n 200`。
+- 使用 Live USB 启动并测试以排除当前安装问题。
+- 若内核更新后模块不匹配，确保安装了 `linux-headers-$(uname -r)` 并重新运行 DKMS 构建。
+</Steps>
+
+<Aside type="note" title="尽量使用发行版软件包">
+优先使用发行版提供的软件包。仅在确无可用软件包时，按厂商说明使用第三方二进制驱动。
+</Aside>

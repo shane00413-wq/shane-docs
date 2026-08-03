@@ -1,0 +1,43 @@
+---
+title: "使用 CMake 构建 C/C++ 项目"
+description: "面向小型和中型项目的 CMake 实践：源外构建、目标、常用编译选项。"
+sidebar:
+  order: 14
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+CMake 是一个元构建系统：`CMakeLists.txt` 描述目标与依赖，CMake 会生成本机构建文件（Makefile、Ninja 等）。建议使用源外（out-of-source）构建以保持源码树整洁。
+
+## 最小示例
+
+`CMakeLists.txt`：
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(hello C)
+add_executable(hello src/main.c)
+target_compile_features(hello PRIVATE c_std_11)
+```
+
+构建步骤：
+
+```bash
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake --build .
+```
+
+## 常用选项
+
+- `CMAKE_BUILD_TYPE=Debug|Release` 控制优化与调试信息
+- `-DCMAKE_C_FLAGS="-Wall -Wextra"` 打开更多警告
+
+<Steps>
+- 推荐使用 `Ninja` 作为后端以获得更快的并行构建：`cmake -G Ninja ..`。
+- 使用 `find_package` 查找依赖，例如 `find_package(PkgConfig REQUIRED)` 并用 `pkg_check_modules`。
+- 将测试放在 `tests/` 中，使用 `enable_testing()` 和 `add_test()`。
+</Steps>
+
+<Aside type="note" title="注意 CMake 版本">
+较新的 CMake 提供现代化便利函数和更好的模式支持；若发行版仓库版本较旧，考虑在本地安装较新的 CMake。
+</Aside>

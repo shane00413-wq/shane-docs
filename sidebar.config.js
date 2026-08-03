@@ -34,6 +34,32 @@ export default [
         }
       },
       {
+        "label": "Environment",
+        "items": [
+          {
+            "autogenerate": {
+              "directory": "Linux/Environment"
+            }
+          }
+        ],
+        "translations": {
+          "zh-cn": "环境配置"
+        }
+      },
+      {
+        "label": "Tooling",
+        "items": [
+          {
+            "autogenerate": {
+              "directory": "Linux/Tooling"
+            }
+          }
+        ],
+        "translations": {
+          "zh-cn": "工具链"
+        }
+      },
+      {
         "label": "Dev Tools",
         "items": [
           {

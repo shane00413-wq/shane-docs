@@ -1,0 +1,40 @@
+---
+title: "在开发中使用容器"
+description: "容器（Docker、Podman）如何隔离开发环境、简化可复现构建并加速 CI 流程。"
+sidebar:
+  order: 16
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+容器为构建和测试代码提供轻量且可复现的环境。当项目依赖特定工具链版本或服务时，容器尤其有用。
+
+## 快速示例：用于 C 构建的 Dockerfile
+
+```dockerfile
+FROM ubuntu:24.04
+RUN apt update && apt install -y build-essential cmake git
+WORKDIR /src
+COPY . /src
+RUN mkdir -p build && cd build && cmake .. && cmake --build .
+```
+
+运行容器并挂载源代码以便迭代开发：
+
+```bash
+docker build -t myproj:dev .
+docker run --rm -it -v "$PWD":/src -w /src myproj:dev bash
+```
+
+## Podman 与无 root 容器
+
+Podman 在许多系统上可作为 Docker 的替代方案，并默认支持无 root 容器。可用 `podman build` 与 `podman run` 来执行相同的 Dockerfile。
+
+<Steps>
+- 在 CI 中使用容器镜像作为可复现的构建器。
+- 在开发中使用数据卷（volume）以加速编辑 / 构建循环。
+- 保持镜像精简并优化缓存以加速镜像构建。
+</Steps>
+
+<Aside type="note" title="安全与网络">
+注意暴露的端口与绑定挂载。生产环境中应遵循运行时关于用户权限和密钥管理的最佳实践。
+</Aside>

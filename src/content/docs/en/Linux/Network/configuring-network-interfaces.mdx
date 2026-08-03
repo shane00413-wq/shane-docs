@@ -1,0 +1,141 @@
+---
+title: "Configuring Network Interfaces on Linux"
+description: "Practical, detailed steps to configure network interfaces using NetworkManager, systemd-networkd, and netplan; covers DHCP, static IPs, DNS, and troubleshooting commands."
+sidebar:
+  order: 21
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This guide shows concrete commands and configuration examples for common Linux network setups. It focuses on modern tools: `NetworkManager`, `systemd-networkd`, and Ubuntu's `netplan` frontend. Keep in mind distributions differ in defaults; adapt file paths accordingly.
+
+## Inspecting current state
+
+Check interfaces and addresses:
+
+```bash
+ip addr show
+ip route show
+ss -tuln
+```
+
+Check kernel messages and network service logs for device and driver issues:
+
+```bash
+sudo journalctl -k | tail -n 200
+sudo journalctl -u NetworkManager -n 200
+sudo dmesg | grep -i ethernet
+```
+
+## NetworkManager (desktop, dynamic setups)
+
+Bring an interface up and request DHCP:
+
+```bash
+sudo nmcli device status
+sudo nmcli device connect eth0
+sudo nmcli device show eth0
+```
+
+Create a static IPv4 connection using `nmcli`:
+
+```bash
+sudo nmcli connection add type ethernet ifname eth0 con-name static-eth0 ipv4.method manual ipv4.addresses 192.0.2.10/24 ipv4.gateway 192.0.2.1 ipv4.dns "8.8.8.8 1.1.1.1"
+sudo nmcli connection up static-eth0
+```
+
+Use `nmtui` for an interactive TUI on systems with NetworkManager:
+
+```bash
+sudo nmtui
+```
+
+## systemd-networkd (server, minimal setups)
+
+Drop a `.network` file in `/etc/systemd/network/` for DHCP:
+
+```ini
+[Match]
+Name=eth0
+
+[Network]
+DHCP=ipv4
+```
+
+For a static address:
+
+```ini
+[Match]
+Name=eth0
+
+[Network]
+Address=192.0.2.20/24
+Gateway=192.0.2.1
+DNS=8.8.8.8
+```
+
+Then restart the service:
+
+```bash
+sudo systemctl restart systemd-networkd
+sudo networkctl status eth0
+```
+
+## netplan (Ubuntu and derivatives)
+
+Netplan YAML lives in `/etc/netplan/` and translates to NetworkManager or systemd-networkd backends. Example static config:
+
+```yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      addresses: [192.0.2.30/24]
+      gateway4: 192.0.2.1
+      nameservers:
+        addresses: [8.8.8.8,1.1.1.1]
+```
+
+Apply with:
+
+```bash
+sudo netplan apply
+```
+
+## DNS and resolvability
+
+On systems using `systemd-resolved`, check status with:
+
+```bash
+systemd-resolve --status
+resolvectl status
+```
+
+Temporary DNS test:
+
+```bash
+dig @8.8.8.8 example.com +short
+ping -c2 8.8.8.8
+```
+
+## Troubleshooting steps (practical checklist)
+
+<Steps>
+- Verify link: `cat /sys/class/net/eth0/operstate` and `ethtool eth0`.
+- Check driver/kernel messages: `dmesg | grep -i eth0` and `sudo journalctl -k`.
+- Confirm IP and routes: `ip addr`, `ip route`.
+- Test connectivity: `ping`, `traceroute`, and `curl --interface eth0 https://ifconfig.co`.
+- Capture packets for analysis: `sudo tcpdump -i eth0 -n -s 0 -w /tmp/cap.pcap`.
+- Check for NetworkManager interfering when using `systemd-networkd` (or vice versa) — ensure only one manager controls the interface.
+</Steps>
+
+<Aside type="note" title="Persisting configuration">
+Avoid editing `/etc/resolv.conf` directly on systems managed by `systemd-resolved` or NetworkManager; instead configure nameservers via the appropriate tool to avoid overwrites.
+</Aside>
+
+## Quick recovery recipes
+
+- If an interface does not come up after a configuration change, run `sudo ip link set dev eth0 down` then `sudo ip link set dev eth0 up`, and `sudo systemctl restart NetworkManager` or `systemctl restart systemd-networkd` as relevant.
+- For flaky DHCP, clear leases (`/var/lib/NetworkManager/` or DHCP client state) and request a fresh lease.
+
+This guide is intentionally concrete — tell me which distribution(s) you want exact commands for (Debian/Ubuntu, Fedora, Arch) and我会补齐更精确的步骤与示例。 

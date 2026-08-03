@@ -1,0 +1,55 @@
+---
+title: "Ubuntu 上的蓝牙驱动与排错"
+description: "安装与排查 BlueZ，验证固件与内核模块，使用 `bluetoothctl` 配对设备，以及常见修复步骤。" 
+sidebar:
+  order: 27
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+本文涵盖安装 BlueZ、确保固件与内核模块加载、使用 `bluetoothctl` 配对设备的步骤。
+
+## 1 安装 BlueZ 与工具
+
+```bash
+sudo apt update
+sudo apt install -y bluez bluez-tools bluetooth
+sudo systemctl enable --now bluetooth
+```
+
+## 2 检查硬件与模块
+
+```bash
+lsusb
+lspci -nnk | grep -i bluetooth -A3
+lsmod | grep btusb
+```
+
+若 `btusb` 未加载，尝试：`sudo modprobe btusb`。
+
+## 3 使用 bluetoothctl 配对
+
+```bash
+bluetoothctl
+# 在交互提示符内
+power on
+agent on
+default-agent
+scan on
+# 等待设备出现
+pair <MAC>
+trust <MAC>
+connect <MAC>
+```
+
+## 4 排错要点
+
+<Steps>
+- 检查 rfkill：`rfkill list all` — 若被阻塞，用 `sudo rfkill unblock all` 解除。
+- 查看蓝牙服务日志：`journalctl -u bluetooth -n 200`。
+- 若缺失固件，`dmesg | grep -i bluetooth` 通常会显示文件名；安装 `linux-firmware` 或厂商固件包。
+- 若配对失败，尝试移除设备（`remove <MAC>`）后重新配对。
+</Steps>
+
+<Aside type="note" title="无界面配对">
+对无显示设备，可在 `bluetoothctl` 中使用支持 PIN 的配对代理或根据设备要求使用 `--legacy` 标志。
+</Aside>

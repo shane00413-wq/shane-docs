@@ -1,0 +1,51 @@
+---
+title: "Setting Up a Linux Development Environment"
+description: "A concise, practical set of packages and configuration steps to prepare a Linux system for software development."
+sidebar:
+  order: 11
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+A clean, repeatable development environment reduces friction. This article lists the minimal tools and a recommended initial configuration for a modern Linux developer workstation, with examples for Debian/Ubuntu and notes for other distributions.
+
+## Essential packages
+
+Install these packages on Debian/Ubuntu systems to cover compilation, version control, networking, and a capable editor:
+
+```bash
+sudo apt update && sudo apt install -y build-essential git curl neovim python3 python3-pip cmake gdb pkg-config
+```
+
+On Fedora/RHEL-based systems use `dnf`:
+
+```bash
+sudo dnf install @development-tools git curl neovim python3 python3-pip cmake gdb pkgconf-pkg-config
+```
+
+These packages provide a working toolchain for compiled languages (GCC/clang via `build-essential` or `@development-tools`), `cmake` for modern builds, `gdb` for native debugging, and `neovim` as a powerful editor.
+
+## Minimal configuration steps
+
+<Steps>
+- Install and configure `git` (name + email).
+- Create a local `~/projects` directory and choose a shell (`bash` or `zsh`).
+- Configure a basic `~/.gitconfig` with `credential.helper` and a sensible `core.editor`.
+- Create a small `~/.config/nvim/init.lua` to enable LSP and completion (see the Neovim article for details).
+- Create a `~/projects/example` workspace and test building a small C program with `gcc -o hello hello.c`.
+</Steps>
+
+## Quick verification
+
+Run these commands to confirm the most important tools are available:
+
+```bash
+git --version && gcc --version && cmake --version && nvim --version && gdb --version
+```
+
+<Aside type="tip" title="Keep changes small and reproducible">
+When setting up a new machine, prefer scripted installs (shell scripts or dotfiles) so the environment can be reproduced exactly on another device.
+</Aside>
+
+## Next steps
+
+With the core toolchain installed, proceed to learn compiling from source, working with `cmake`, and configuring Neovim for code navigation and debugging.

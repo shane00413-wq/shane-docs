@@ -1,0 +1,94 @@
+---
+title: "在 Ubuntu 上使用 DKMS 构建内核模块"
+description: "逐步说明：安装 DKMS、构建并安装模块、让 DKMS 在内核更新时自动重建，以及如何干净卸载模块。" 
+sidebar:
+  order: 24
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+本文介绍 DKMS 的使用与手动内核模块构建步骤，并提供具体命令。DKMS 会在内核更新时自动重建已注册的模块。
+
+## 1 安装 DKMS 与内核头
+
+```bash
+sudo apt update
+sudo apt install -y dkms build-essential linux-headers-$(uname -r)
+```
+
+确保头文件与 `uname -r` 输出一致。
+
+## 2 简单手动构建（测试用）
+
+在 `~/projects/hellomodule/` 中创建最小模块：
+
+`hellomodule.c`：
+
+```c
+#include <linux/module.h>
+#include <linux/kernel.h>
+static int __init hello_init(void){ printk(KERN_INFO "hello loaded\n"); return 0; }
+static void __exit hello_exit(void){ printk(KERN_INFO "hello unloaded\n"); }
+module_init(hello_init);
+module_exit(hello_exit);
+MODULE_LICENSE("GPL");
+```
+
+`Makefile`：
+
+```makefile
+obj-m += hellomodule.o
+all:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+clean:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+```
+
+构建并加载：
+
+```bash
+make
+sudo insmod hellomodule.ko
+dmesg | tail
+sudo rmmod hellomodule
+```
+
+## 3 DKMS 工作流（打包模块）
+
+在 `/usr/src/yourmod-1.0/` 放置源代码并创建 `dkms.conf`，最小示例：
+
+```text
+PACKAGE_NAME="yourmod"
+PACKAGE_VERSION="1.0"
+BUILT_MODULE_NAME[0]="yourmod"
+DEST_MODULE_LOCATION[0]="/kernel/drivers/misc"
+AUTOINSTALL="yes"
+```
+
+注册并使用 DKMS 构建：
+
+```bash
+sudo dkms add -m yourmod -v 1.0
+sudo dkms build -m yourmod -v 1.0
+sudo dkms install -m yourmod -v 1.0
+```
+
+DKMS 会在 `/var/lib/dkms/yourmod/1.0/` 存储构建结果，并在内核更新时自动重建。
+
+卸载：
+
+```bash
+sudo dkms remove -m yourmod -v 1.0 --all
+```
+
+## 4 DKMS 构建排错
+
+<Steps>
+- 查看构建日志：`/var/lib/dkms/<module>/<version>/build/make.log`。
+- 确保已安装匹配的 `linux-headers-$(uname -r)`。
+- 若内核升级后 DKMS 构建失败，手动运行 `dkms build` 查看错误，并修复缺失符号或 API 变更。
+- 使用 `dkms status` 列出已安装模块及其状态。
+</Steps>
+
+<Aside type="note" title="生产注意事项">
+如果要发布模块，优先考虑将功能合并到内核主线或谨慎使用 DKMS，因为内核 ABI 在不同版本间可能变化，需长期维护。
+</Aside>

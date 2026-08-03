@@ -1,0 +1,36 @@
+---
+title: "平铺式窗口管理器简介"
+description: "为什么开发者使用平铺式窗口管理器（i3、Sway），以及如何用最小配置开始使用。"
+sidebar:
+  order: 15
+---
+import { Aside, FileTree } from '@astrojs/starlight/components';
+
+平铺式窗口管理器以键盘为中心管理窗口布局，资源占用低，适合追求高效工作流的开发者。常见的有基于 X11 的 `i3` 和基于 Wayland 的 `sway`。
+
+## 基本概念
+
+- 工作区（workspaces）：用于分组窗口的虚拟桌面。
+- 平铺（tiling）：窗口自动调整大小以填满可用空间。
+- 浮动窗口：用于对话框或需要自由移动的应用。
+
+## 最小 i3 配置示例
+
+将配置放到 `~/.config/i3/config`：
+
+```
+set $mod Mod4
+bindsym $mod+Return exec alacritty
+bindsym $mod+d exec dmenu_run
+workspace 1 output HDMI-1
+```
+
+## 入门步骤
+
+1. 从包管理器安装 `i3` 或 `sway`。
+2. 创建最小配置，绑定终端和启动器。
+3. 学习工作区切换与窗口移动的快捷键。
+
+<Aside type="tip" title="在 VM 或独立会话中尝试">
+在虚拟机或独立用户会话中测试新的窗口管理器，以免在学习过程中失去对工作环境的访问权限。
+</Aside>

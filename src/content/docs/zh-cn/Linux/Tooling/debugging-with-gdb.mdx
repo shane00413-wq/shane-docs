@@ -1,0 +1,138 @@
+---
+title: "使用 gdb 调试本地程序"
+description: "如何启用调试符号并使用 gdb 检查、单步和诊断在 Linux 上运行的本地程序。"
+sidebar:
+  order: 12
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+使用调试信息编译程序，以便在 `gdb` 中获得有意义的调试内容：
+
+```bash
+gcc -g -O0 -o myprog myprog.c
+```
+
+解释：
+
+- `-g` 会在可执行文件中嵌入调试符号（函数名、行号、局部变量类型）。
+- `-O0` 关闭优化，避免编译器把变量移除或重排，便于调试时观察程序状态。
+
+## 启动会话与常见工作流
+
+用参数启动 gdb：
+
+```bash
+gdb --args ./myprog arg1 arg2
+```
+
+一个典型的交互流程：
+
+- `break main` — 在 `main` 处设置断点。
+- `run` — 启动程序。
+- 程序停止时使用 `bt` 查看调用栈，`frame 2` 切换帧，`print var` 检查变量。
+- `next` 跳过函数调用，`step` 进入函数内部。
+
+常用命令一览：
+
+- `run` — 启动程序
+- `break <function|file:line>` — 设置断点
+- `delete` — 删除断点
+- `info breakpoints` — 列出断点
+- `next` / `step` — 单步（跳过 / 进入）
+- `continue` — 继续执行
+- `bt` / `backtrace` — 打印调用栈
+- `frame <n>` — 切换到指定帧
+- `print <expression>` — 打印变量或求值表达式
+- `set variable x=42` — 修改程序状态中变量的值
+
+## 示例：定位段错误（SIGSEGV）
+
+若程序崩溃，先确保生成 core 文件或在 gdb 中运行：
+
+```bash
+ulimit -c unlimited
+./myprog
+# 崩溃并生成 core 后：
+gdb ./myprog core
+# 或者在 gdb 中直接运行：
+gdb --args ./myprog
+run
+```
+
+运行 `bt` 会显示崩溃堆栈，例如：
+
+```
+#0  0x00007ffff7a3341a in strcpy () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x4006f4 in unsafe_copy (src=0x602010 "...", dest=0x7fffffffe2c0 "...") at buffer.c:12
+#2  0x400710 in main () at hello.c:24
+```
+
+使用 `frame 1`，然后 `print src` 和 `print dest` 查看该帧内变量。用 `list` 显示崩溃附近的源码。
+
+## 条件断点、观察点与信号处理
+
+- 条件断点：`break foo if x==0` — 仅当条件满足时停下。
+- 观察点（watchpoint）：`watch myvar` — 当 `myvar` 的值发生变化时停下（硬件观察点数量受限）。
+- 信号处理：`handle SIGSEGV print pass` 用于配置 gdb 如何显示与传递信号。
+
+## 检查复杂数据与 C++ 容器
+
+对于 C++ 的 STL 容器，启用 pretty-printers（通常随 libstdc++ 调试助手一起提供）。如果未启用，可安装并配置 gdb 的 Python pretty-printers，然后 `print std::vector_var` 会以人类可读形式显示内容。
+
+## 远程调试（gdbserver）
+
+在目标机（或容器/虚拟机）上运行 `gdbserver`，在主机上连接并调试：
+
+目标机：
+
+```bash
+gdbserver :1234 ./myprog arg1
+```
+
+主机：
+
+```bash
+gdb ./myprog
+target remote target-ip:1234
+continue
+```
+
+这样可以在主机上使用完整的源代码与 gdb，同时程序在目标机上运行。
+
+## 自动化与 CI 的回溯收集
+
+在 CI 中非交互地收集回溯信息：
+
+```bash
+gdb --batch -ex 'run' -ex 'bt full' --args ./myprog
+```
+
+或当已有 core 文件时：
+
+```bash
+gdb --batch -ex 'bt full' ./myprog core > core-backtrace.txt
+```
+
+## 实用技巧与工具整合
+
+- `addr2line -e ./myprog 0x4006f4`：把地址转换为文件:行号。
+- 在脚本中使用 `set print pretty on` 与 `set pagination off` 可获得更简洁的输出。
+- 对 Python 扩展或使用 GDB Python 脚本时，可在 gdb 中使用 `python` 块自动化任务。
+
+## 进阶：与 perf 联合使用
+
+当 bug 难以重现或与性能相关时，用 `perf record` / `perf report` 找出热点，再在热点附近使用 gdb 调试和检查运行时状态。
+
+## gdb 本身的排错
+
+若 gdb 报告缺少符号，确认使用了 `-g` 编译且可执行文件未被 strip。用 `file` 和 `readelf -S ./myprog` 检查符号表与段信息。
+
+<Steps>
+- 交互式调试使用 `-g -O0`；发布构建可用 `-g -O2` 保留部分符号信息。
+- 在 CI 中使用 `gdb --batch -ex 'run' -ex 'bt' --args ./myprog` 捕获失败测试的回溯。
+- 重现崩溃时设 `ulimit -c unlimited` 保存 core dump 以便事后分析。
+</Steps>
+
+<Aside type="note" title="IDE 与 LSP 集成">
+现代编辑器（Neovim、VS Code）可通过 DAP 适配器与插件整合调试器；但在编辑器失效或需要底层排查时，熟练使用纯 `gdb` 十分必要。
+</Aside>

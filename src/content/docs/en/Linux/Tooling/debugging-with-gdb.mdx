@@ -1,0 +1,138 @@
+---
+title: "Debugging Native Programs with gdb"
+description: "How to build with debug symbols and use gdb to inspect, step, and diagnose native programs on Linux."
+sidebar:
+  order: 12
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Compile programs with debug information to enable meaningful inspection with `gdb`.
+
+```bash
+gcc -g -O0 -o myprog myprog.c
+```
+
+Explanation:
+
+- `-g` embeds debugging symbols (function names, line numbers, local variable types).
+- `-O0` disables optimizations that can move or remove variables; for interactive debugging this simplifies reasoning about state.
+
+## Start a session and basic workflow
+
+Start `gdb` with arguments:
+
+```bash
+gdb --args ./myprog arg1 arg2
+```
+
+Inside `gdb`, a minimal session looks like:
+
+- `break main` — set a breakpoint at `main`.
+- `run` — start the program.
+- When stopped: `bt` to inspect the call stack, `frame 2` to switch frames, `print var` to evaluate expressions.
+- `next` steps over function calls; `step` steps into them.
+
+Common commands summary:
+
+- `run` — start program
+- `break <function|file:line>` — set breakpoint
+- `delete` — remove breakpoints
+- `info breakpoints` — list breakpoints
+- `next` / `step` — step over / into
+- `continue` — resume execution
+- `bt` / `backtrace` — show call stack
+- `frame <n>` — select stack frame
+- `print <expression>` — print variable or evaluate expression
+- `set variable x=42` — change program state
+
+## Example: diagnose a segmentation fault
+
+Given a crash, run the program under gdb or load a core file:
+
+```bash
+ulimit -c unlimited
+./myprog
+# if it crashes and produces core
+gdb ./myprog core
+# or run under gdb
+gdb --args ./myprog
+run
+```
+
+Use `bt` to see where the crash occurred. Example output:
+
+```
+#0  0x00007ffff7a3341a in strcpy () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x4006f4 in unsafe_copy (src=0x602010 "...", dest=0x7fffffffe2c0 "...") at buffer.c:12
+#2  0x400710 in main () at hello.c:24
+```
+
+`frame 1` then `print src` and `print dest` will show values in that frame. Use `list` to show source lines around the crash.
+
+## Conditional breakpoints, watchpoints, and signals
+
+- Conditional breakpoint: `break foo if x==0` — stops only when condition true.
+- Watchpoint: `watch myvar` — stops when `myvar` changes (hardware watchpoints are limited by CPU support).
+- Catch signals: `handle SIGSEGV print pass` configures how gdb reports and delivers signals.
+
+## Inspecting complex data and C++ containers
+
+For C++ STL containers, enable pretty-printers (usually shipped with libstdc++ debug helpers). If not enabled, install `python3-libstdc++-v6` or configure gdb's `python` pretty-printers. Then `print std::vector_var` shows contents nicely.
+
+## Remote debugging with gdbserver
+
+To debug on a target machine (or VM/container), run `gdbserver` on the target and connect from the host:
+
+On target:
+
+```bash
+gdbserver :1234 ./myprog arg1
+```
+
+On host:
+
+```bash
+gdb ./myprog
+target remote target-ip:1234
+continue
+```
+
+This lets you use the host's gdb and source while the program runs on the remote device.
+
+## Automating and CI-friendly backtraces
+
+In CI or automated test environments capture a backtrace non-interactively:
+
+```bash
+gdb --batch -ex 'run' -ex 'bt full' --args ./myprog
+```
+
+Or when you have a core file:
+
+```bash
+gdb --batch -ex 'bt full' ./myprog core > core-backtrace.txt
+```
+
+## Useful integrations and tips
+
+- `addr2line -e ./myprog 0x4006f4` converts addresses to file:line when you only have an address.
+- Use `set print pretty on` and `set pagination off` for cleaner output in scripts.
+- For Python extensions or GDB Python scripting, use `python` blocks inside gdb to automate tasks.
+
+## Advanced: perf and combined workflows
+
+When a bug is intermittent or performance-related, combine `perf record`/`perf report` to find hotspots, then reproduce the problematic region under gdb to inspect state.
+
+## Troubleshooting gdb itself
+
+If gdb reports missing symbols, ensure you built with `-g` and did not strip the binary. Use `file` and `readelf -S ./myprog` to inspect symbol sections.
+
+<Steps>
+- Build with `-g -O0` for interactive debugging; use `-g -O2` for release with some symbol info retained.
+- Use `gdb --batch -ex 'run' -ex 'bt' --args ./myprog` in CI to capture backtraces for failing tests.
+- Save core dumps with `ulimit -c unlimited` when reproducing crashes locally.
+</Steps>
+
+<Aside type="note" title="IDE and LSP integration">
+Modern editors (Neovim, VS Code) can integrate with debuggers via DAP adapters and plugins; however, a solid understanding of pure `gdb` is invaluable for low-level crash triage and when editors fail.
+</Aside>

@@ -1,0 +1,43 @@
+---
+title: "Building C/C++ Projects with CMake"
+description: "Practical patterns for small and medium C/C++ projects using CMake: out-of-source builds, targets, and common flags."
+sidebar:
+  order: 14
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+CMake is a meta-build system: project metadata in `CMakeLists.txt` describes targets, while CMake generates native build files (Makefiles, Ninja, Visual Studio solutions). Use out-of-source builds to keep the source tree clean.
+
+## A minimal project
+
+`CMakeLists.txt`:
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(hello C)
+add_executable(hello src/main.c)
+target_compile_features(hello PRIVATE c_std_11)
+```
+
+Build steps:
+
+```bash
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake --build .
+```
+
+## Common options
+
+- `CMAKE_BUILD_TYPE=Debug|Release` controls optimization and debug info
+- `-DCMAKE_C_FLAGS="-Wall -Wextra"` to surface warnings
+
+<Steps>
+- Prefer `Ninja` as the underlying backend for fast parallel builds: `cmake -G Ninja ..`.
+- Use `find_package` to locate dependencies (e.g., `find_package(PkgConfig REQUIRED)` then use `pkg_check_modules`).
+- Keep tests in a `tests/` directory and use `enable_testing()` + `add_test()`.
+</Steps>
+
+<Aside type="note" title="CMake version matters">
+Newer CMake versions add useful convenience functions and modern CMake patterns; if a distribution provides an older CMake, consider installing a newer release locally.
+</Aside>

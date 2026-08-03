@@ -1,0 +1,57 @@
+---
+title: "面向开发者的 Neovim 简介"
+description: "为编程配置 Neovim 的实用指南：最小 `init.lua`、LSP、补全与常用插件。"
+sidebar:
+  order: 13
+---
+import { Aside, CardGrid, Card } from '@astrojs/starlight/components';
+
+Neovim 是一个快速且可扩展的编辑环境，配合少量插件与 LSP 客户端后，非常适合编程工作。本文展示一个现代且最小化的配置示例，不强制使用特定的插件管理器。
+
+## 最小化 `init.lua`
+
+将文件放到 `~/.config/nvim/init.lua`：
+
+```lua
+-- minimal init.lua
+vim.o.number = true
+vim.o.expandtab = true
+vim.o.shiftwidth = 2
+
+require('plugins') -- 将插件拆分到单独文件
+require('lsp')
+```
+
+这种分离有助于保持核心设置简洁，并把插件配置单独管理。
+
+## 语言服务器协议（LSP）
+
+使用 `nvim-lspconfig` 将 Neovim 连接到语言服务器。示例（Python / Lua）：
+
+```lua
+local lspconfig = require('lspconfig')
+lspconfig.pyright.setup({})
+lspconfig.lua_ls.setup({})
+```
+
+## 插件与插件管理器
+
+常见的插件管理器包括 `lazy.nvim` 与 `packer.nvim`。对于开发，推荐的精简插件集合包括：LSP 客户端、补全引擎（nvim-cmp）、treesitter 语法以及文件浏览器。
+
+<CardGrid>
+  <Card title="LSP" description="nvim-lspconfig + 对应语言服务器提供诊断和跳转功能。"/>
+  <Card title="补全" description="nvim-cmp 从 LSP 与缓冲区提供补全条目。"/>
+  <Card title="语法" description="treesitter 提供更准确的高亮与结构选择。"/>
+</CardGrid>
+
+<Aside type="tip" title="从小处开始">
+先只启用 LSP 与补全，确保工作流稳定后再按需添加其它插件，以保持启动时间可预测。
+</Aside>
+
+## 测试配置
+
+打开一个项目并确认：
+
+1. 诊断会显示语法/类型错误。
+2. `gd` 或 `vim.lsp.buf.definition()` 能跳转到符号定义。
+3. 补全建议在输入时自动弹出。

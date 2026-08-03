@@ -1,0 +1,141 @@
+---
+title: "Linux 网络接口配置详解"
+description: "使用 NetworkManager、systemd-networkd 和 netplan 的实操配置：DHCP、静态 IP、DNS 以及排错命令。"
+sidebar:
+  order: 21
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+本文提供具体的命令与配置示例，适用于常见的 Linux 网络场景。重点介绍现代工具：`NetworkManager`、`systemd-networkd` 与 Ubuntu 的 `netplan`。不同发行版默认设置不同，请据此调整路径与服务名。
+
+## 查看当前网络状态
+
+检查接口与地址：
+
+```bash
+ip addr show
+ip route show
+ss -tuln
+```
+
+检查内核与网络服务日志以排查设备或驱动问题：
+
+```bash
+sudo journalctl -k | tail -n 200
+sudo journalctl -u NetworkManager -n 200
+sudo dmesg | grep -i ethernet
+```
+
+## NetworkManager（桌面、动态场景）
+
+使接口上线并请求 DHCP：
+
+```bash
+sudo nmcli device status
+sudo nmcli device connect eth0
+sudo nmcli device show eth0
+```
+
+使用 `nmcli` 创建静态 IPv4 连接：
+
+```bash
+sudo nmcli connection add type ethernet ifname eth0 con-name static-eth0 ipv4.method manual ipv4.addresses 192.0.2.10/24 ipv4.gateway 192.0.2.1 ipv4.dns "8.8.8.8 1.1.1.1"
+sudo nmcli connection up static-eth0
+```
+
+可以使用交互式工具 `nmtui`（若安装）进行图形化配置：
+
+```bash
+sudo nmtui
+```
+
+## systemd-networkd（服务器、极简场景）
+
+在 `/etc/systemd/network/` 放置 `.network` 文件以启用 DHCP：
+
+```ini
+[Match]
+Name=eth0
+
+[Network]
+DHCP=ipv4
+```
+
+静态地址示例：
+
+```ini
+[Match]
+Name=eth0
+
+[Network]
+Address=192.0.2.20/24
+Gateway=192.0.2.1
+DNS=8.8.8.8
+```
+
+重启并检查：
+
+```bash
+sudo systemctl restart systemd-networkd
+sudo networkctl status eth0
+```
+
+## netplan（Ubuntu 系列）
+
+`/etc/netplan/` 下为 YAML 配置，会翻译到 NetworkManager 或 systemd-networkd。静态示例：
+
+```yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      addresses: [192.0.2.30/24]
+      gateway4: 192.0.2.1
+      nameservers:
+        addresses: [8.8.8.8,1.1.1.1]
+```
+
+生效命令：
+
+```bash
+sudo netplan apply
+```
+
+## DNS 与解析
+
+使用 `systemd-resolved` 的主机可执行：
+
+```bash
+systemd-resolve --status
+resolvectl status
+```
+
+临时测试 DNS：
+
+```bash
+dig @8.8.8.8 example.com +short
+ping -c2 8.8.8.8
+```
+
+## 排错清单（实用步骤）
+
+<Steps>
+- 验证链路：`cat /sys/class/net/eth0/operstate` 与 `ethtool eth0`。
+- 查看驱动/内核日志：`dmesg | grep -i eth0` 与 `sudo journalctl -k`。
+- 确认 IP 与路由：`ip addr`、`ip route`。
+- 测试连通性：`ping`、`traceroute`、`curl --interface eth0 https://ifconfig.co`。
+- 抓包分析：`sudo tcpdump -i eth0 -n -s 0 -w /tmp/cap.pcap`。
+- 检查 NetworkManager 与 systemd-networkd 是否冲突；仅用一个管理同一接口。
+</Steps>
+
+<Aside type="note" title="配置持久化">
+在使用 `systemd-resolved` 或 NetworkManager 的系统上，避免直接编辑 `/etc/resolv.conf`，应通过对应工具配置 nameserver 以免被覆盖。
+</Aside>
+
+## 快速修复小贴士
+
+- 如果配置变更后接口无法上线，运行 `sudo ip link set dev eth0 down` 然后 `sudo ip link set dev eth0 up`，并重启对应网络服务（`NetworkManager` 或 `systemd-networkd`）。
+- DHCP 异常时清除租约并请求新租约（具体路径因实现而异）。
+
+如果你希望我按发行版（Debian/Ubuntu、Fedora、Arch）列出更精确的命令和文件路径，我可以接着生成每个发行版的详尽步骤与示例配置。

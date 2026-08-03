@@ -1,0 +1,51 @@
+---
+title: "在 Linux 上搭建开发环境"
+description: "为软件开发准备 Linux 系统的实用最小软件包与配置步骤。"
+sidebar:
+  order: 11
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+一个可复现的开发环境可以显著降低摩擦。本文列出在现代 Linux 开发工作站上推荐安装的最小工具与基础配置，并给出 Debian/Ubuntu 的示例与其它发行版的说明。
+
+## 必备软件包
+
+在 Debian/Ubuntu 上执行以下命令以安装编译、版本控制、网络与编辑器相关的工具：
+
+```bash
+sudo apt update && sudo apt install -y build-essential git curl neovim python3 python3-pip cmake gdb pkg-config
+```
+
+在 Fedora/RHEL 系统上使用 `dnf`：
+
+```bash
+sudo dnf install @development-tools git curl neovim python3 python3-pip cmake gdb pkgconf-pkg-config
+```
+
+这些软件包包含用于编译的工具链（通过 `build-essential` 或 `@development-tools`）、用于现代构建的 `cmake`、用于原生调试的 `gdb`，以及作为编辑器的 `neovim`。
+
+## 最小化配置步骤
+
+<Steps>
+- 配置 `git`（姓名和邮箱）。
+- 创建 `~/projects` 作为代码工作目录，并选择一个 shell（`bash` 或 `zsh`）。
+- 配置一个基础的 `~/.gitconfig`，设置 `credential.helper` 与 `core.editor`。
+- 创建简短的 `~/.config/nvim/init.lua`，启用 LSP 和自动补全（参见 Neovim 文章）。
+- 在 `~/projects/example` 下创建示例项目并测试使用 `gcc -o hello hello.c` 构建。
+</Steps>
+
+## 快速验证
+
+运行下列命令以确认关键工具可用：
+
+```bash
+git --version && gcc --version && cmake --version && nvim --version && gdb --version
+```
+
+<Aside type="tip" title="将安装脚本化以便复现">
+在新机器上设置时，优先使用脚本化的安装（shell 脚本或 dotfiles），以便在另一台设备上精确复现环境。
+</Aside>
+
+## 后续建议
+
+在安装核心工具链之后，继续学习从源码构建、使用 `cmake`、以及为 Neovim 配置代码导航与调试支持。

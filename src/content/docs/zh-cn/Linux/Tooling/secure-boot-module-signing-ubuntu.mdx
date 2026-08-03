@@ -1,0 +1,65 @@
+---
+title: "Ubuntu 上为内核模块签名以支持 Secure Boot"
+description: "如何创建 Machine-Owner Key (MOK)、签名模块、注册密钥并验证已签名模块在 Secure Boot 下加载。" 
+sidebar:
+  order: 25
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+当启用 Secure Boot 时，未签名的内核模块会被拒载。本文说明生成密钥、签名模块、使用 `mokutil` 注册公钥、并验证模块加载的过程。
+
+## 1 安装所需工具
+
+```bash
+sudo apt update
+sudo apt install -y mokutil openssl kmod
+```
+
+## 2 生成密钥对并注册
+
+```bash
+sudo openssl req -new -x509 -newkey rsa:2048 -keyout /root/MOK.priv -out /root/MOK.pem -nodes -days 3650 -subj "/CN=Custom MOK/"
+sudo chmod 600 /root/MOK.priv
+sudo mokutil --import /root/MOK.pem
+```
+
+按提示设置密码。重启进入 MOK 管理器，使用密码完成密钥注册。
+
+## 3 对模块进行签名
+
+找到模块文件（例如 `/lib/modules/$(uname -r)/extra/yourmod.ko`），使用内核自带的 `scripts/sign-file`：
+
+```bash
+sudo /usr/src/linux-headers-$(uname -r)/scripts/sign-file sha256 /root/MOK.priv /root/MOK.pem /lib/modules/$(uname -r)/kernel/drivers/misc/yourmod.ko
+sudo depmod -a
+sudo modprobe yourmod
+```
+
+模块加载成功时，`dmesg` 会显示相应的初始化日志。
+
+## 4 验证签名
+
+使用 `modinfo` 查看签名信息（部分模块会暴露签名字段）：
+
+```bash
+modinfo yourmod | grep signer
+```
+
+也可查看 `dmesg` 或 `journalctl -k`，寻找内核接受签名的消息。
+
+## 5 为 DKMS 自动签名
+
+可在 DKMS 的 post-install 脚本中调用 `sign-file` 来自动签名构建产物。确保签名私钥存在且对应公钥已在机器上注册。
+
+## 6 排错要点
+
+<Steps>
+- 若模块被拒载，检查 `dmesg | grep -i 'sig'` 与 `journalctl -k` 的签名错误信息。
+- 确认 MOK 已在固件中成功注册。
+- 确认 `sign-file` 的路径对应该内核头包，通常位于 `/usr/src/linux-headers-$(uname -r)/scripts/`。
+- 如无法在无头服务器上完成 MOK 注册，考虑使用远程 KVM，或在受控窗口内临时关闭 Secure Boot 来安装并签名模块，随后重新启用。
+</Steps>
+
+<Aside type="note" title="安全提醒">
+请妥善保管私钥 `/root/MOK.priv`。拥有私钥的任何人都可签名模块，系统在信任对应公钥的情况下将接受这些模块。
+</Aside>

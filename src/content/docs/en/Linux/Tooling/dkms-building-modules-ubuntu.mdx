@@ -1,0 +1,94 @@
+---
+title: "DKMS and Building Kernel Modules on Ubuntu"
+description: "Step-by-step: install DKMS, build and install a kernel module, use DKMS to manage builds across kernel updates, and remove modules cleanly." 
+sidebar:
+  order: 24
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This article explains DKMS usage and manual kernel module build steps with concrete commands. DKMS automates rebuilding modules when the kernel is updated.
+
+## 1 Install DKMS and kernel headers
+
+```bash
+sudo apt update
+sudo apt install -y dkms build-essential linux-headers-$(uname -r)
+```
+
+Confirm headers match `uname -r`.
+
+## 2 Simple manual build (for testing)
+
+Create a minimal module in `~/projects/hellomodule/`:
+
+`hellomodule.c`:
+
+```c
+#include <linux/module.h>
+#include <linux/kernel.h>
+static int __init hello_init(void){ printk(KERN_INFO "hello loaded\n"); return 0; }
+static void __exit hello_exit(void){ printk(KERN_INFO "hello unloaded\n"); }
+module_init(hello_init);
+module_exit(hello_exit);
+MODULE_LICENSE("GPL");
+```
+
+`Makefile`:
+
+```makefile
+obj-m += hellomodule.o
+all:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+clean:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+```
+
+Build and load:
+
+```bash
+make
+sudo insmod hellomodule.ko
+dmesg | tail
+sudo rmmod hellomodule
+```
+
+## 3 DKMS workflow (packaging a module)
+
+Create `/usr/src/yourmod-1.0/` with source and a `dkms.conf` describing the module. Minimal `dkms.conf`:
+
+```text
+PACKAGE_NAME="yourmod"
+PACKAGE_VERSION="1.0"
+BUILT_MODULE_NAME[0]="yourmod"
+DEST_MODULE_LOCATION[0]="/kernel/drivers/misc"
+AUTOINSTALL="yes"
+```
+
+Register and build with DKMS:
+
+```bash
+sudo dkms add -m yourmod -v 1.0
+sudo dkms build -m yourmod -v 1.0
+sudo dkms install -m yourmod -v 1.0
+```
+
+DKMS stores builds under `/var/lib/dkms/yourmod/1.0/` and will rebuild automatically on kernel updates.
+
+To remove:
+
+```bash
+sudo dkms remove -m yourmod -v 1.0 --all
+```
+
+## 4 Troubleshooting DKMS builds
+
+<Steps>
+- View build logs: `/var/lib/dkms/<module>/<version>/build/make.log`.
+- Ensure matching `linux-headers-$(uname -r)` are installed.
+- If a DKMS build fails after a kernel update, manually run `dkms build` to see errors and fix missing symbols or API changes.
+- Use `dkms status` to list installed modules and their build state.
+</Steps>
+
+<Aside type="note" title="Production caution">
+When shipping modules for others, prefer upstreaming code to the kernel or using DKMS packaging carefully, as ABI changes across kernels may require maintenance.
+</Aside>

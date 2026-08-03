@@ -1,0 +1,84 @@
+---
+title: "在 Ubuntu 上安装与排查 NVIDIA 驱动"
+description: "逐步检测 NVIDIA 硬件、安装驱动（自动与手动）、处理 Secure Boot，并排查常见问题。"
+sidebar:
+  order: 22
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+本文引导新手在 Ubuntu（例如 24.04）上安全安装 NVIDIA 闭源驱动。按步骤执行命令。遇到 Secure Boot 提示时，按文中说明完成 MOK 注册。
+
+## 1 检测 NVIDIA 硬件
+
+查看 PCI 设备与驱动信息：
+
+```bash
+lspci -nnk | grep -iA3 \[03\]:
+# 或更具体地
+lspci -nnk | grep -iA3 nvidia
+lspci -vnn | grep -i nvidia -A 12
+```
+
+若输出包含 NVIDIA VGA/3D 控制器，继续下一步。
+
+## 2 推荐的自动安装（安全）
+
+Ubuntu 提供 `ubuntu-drivers` 来安装经测试的驱动：
+
+```bash
+sudo ubuntu-drivers devices
+sudo ubuntu-drivers autoinstall
+sudo reboot
+```
+
+安装完成后重启以加载内核模块。
+
+## 3 手动安装指定驱动版本
+
+例如安装 `nvidia-driver-535`：
+
+```bash
+sudo apt update
+sudo apt install -y nvidia-driver-535 nvidia-utils-535
+sudo reboot
+```
+
+重启后验证：
+
+```bash
+nvidia-smi
+lsmod | grep nvidia
+```
+
+## 4 Secure Boot 与 MOK 注册
+
+若启用 Secure Boot，未签名模块将被拒载。安装 DKMS 驱动时，Ubuntu 通常会在下次启动触发 MOK 注册提示。若漏掉注册，可手动注册：
+
+```bash
+sudo apt install -y mokutil openssl
+sudo openssl req -new -x509 -newkey rsa:2048 -keyout /root/MOK.priv -out /root/MOK.pem -nodes -days 3650 -subj "/CN=Custom MOK/"
+sudo mokutil --import /root/MOK.pem
+```
+
+按提示设置密码，重启进入 MOK 管理器，选择 "Enroll MOK" 完成注册。
+
+如需更简单但风险更高的方法，可在固件中禁用 Secure Boot。
+
+## 5 排查要点
+
+若 `nvidia-smi` 报错或无设备：
+
+<Steps>
+- 查看内核日志：`dmesg | grep -i nvidia` 与 `journalctl -k | tail`。
+- 在 `/var/lib/dkms/<module>/<version>/build/make.log` 查找 DKMS 编译日志。
+- 确认 nouveau 未阻塞：`lsmod | grep nouveau`。若存在，创建 `/etc/modprobe.d/blacklist-nouveau.conf`，写入 `blacklist nouveau` 和 `options nouveau modeset=0`，然后 `sudo update-initramfs -u` 并重启。
+- 用 `lspci -k` 查看 VGA 设备使用的驱动。
+- 若为模块签名错误，请检查 MOK 注册或手动签名模块（参见 Secure Boot 文章）。
+- 若 X/Wayland 启动失败，检查 `/var/log/Xorg.0.log` 与 `journalctl -b` 的 compositor/显示管理器日志。
+</Steps>
+
+<Aside type="note" title="回退到开源驱动">
+要回退至开源驱动：`sudo apt remove --purge '^nvidia-.*'`，然后重装默认的 `xserver-xorg-video-nouveau`（如需要）并重启。
+</Aside>
+
+本指南以 Ubuntu 打包驱动为主。如果需要使用 NVIDIA 官方 runfile 安装器，请单独请求——那会涉及停止显示管理器、手动集成 DKMS 与手动签名等更复杂步骤。

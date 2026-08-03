@@ -1,0 +1,202 @@
+---
+title: "Ubuntu: Step-by-Step Setup for Development"
+description: "A beginner-friendly, step-by-step guide to prepare Ubuntu for software development: updates, users, packages, drivers, kernel headers, Docker, and basic troubleshooting." 
+sidebar:
+  order: 20
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This article guides a newcomer through preparing a clean Ubuntu system for development. Follow the commands exactly, and copy/paste only what applies to your machine. Where appropriate, I explain why each step is done.
+
+## 1. Update the system and install basic tools
+
+Open a terminal and run:
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y build-essential curl wget git ca-certificates gnupg lsb-release
+```
+
+- `build-essential` installs GCC, `make`, and essential headers.
+- `gnupg` and `lsb-release` are used when adding third-party repositories.
+
+## 2. Create a working user and basic directory layout
+
+If you are using the default user created during installation, skip user creation. Otherwise create a regular user (do not use `root` for daily work):
+
+```bash
+sudo adduser devuser
+sudo usermod -aG sudo devuser
+su - devuser
+mkdir -p ~/projects ~/bin
+```
+
+Store projects under `~/projects` and personal scripts in `~/bin` (add `~/bin` to `PATH` later if needed).
+
+## 3. Configure Git
+
+Set global name and email, and a sensible core editor:
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email you@example.com
+git config --global core.editor "nvim"
+git config --global credential.helper cache
+```
+
+## 4. Install development editor (Neovim) and language tooling
+
+Install Neovim and Python support:
+
+```bash
+sudo apt install -y neovim python3-pip
+pip3 install --user pynvim
+```
+
+For Node and other toolchains, follow upstream installers for predictable versions (e.g., NodeSource, pyenv, rbenv).
+
+## 5. Install kernel headers and DKMS (for building modules)
+
+Install the headers matching your running kernel:
+
+```bash
+sudo apt install -y linux-headers-$(uname -r) dkms
+```
+
+If headers are unavailable for a custom kernel, install a matching `linux-headers-<version>` package from Ubuntu repositories.
+
+## 6. Graphics drivers (NVIDIA) — safe, step-by-step
+
+Ubuntu provides tested proprietary drivers via `ubuntu-drivers`. Preferred workflow:
+
+```bash
+sudo ubuntu-drivers devices
+sudo ubuntu-drivers autoinstall
+```
+
+Reboot after install. If secure boot is enabled, Ubuntu will prompt to enroll a Machine-Owner Key (MOK) during the next boot — follow on-screen instructions and set a password to complete enrollment.
+
+If you prefer manual control, install a specific driver package, for example:
+
+```bash
+sudo apt install -y nvidia-driver-535
+sudo reboot
+```
+
+Verify the driver:
+
+```bash
+nvidia-smi
+```
+
+If `nvidia-smi` fails, check `dmesg` and `journalctl -u systemd-modules-load` for DKMS/module load errors.
+
+## 7. Mesa / Intel / AMD (open drivers)
+
+Intel and AMD GPUs typically work with Mesa. Keep Mesa recent via the official Ubuntu updates or a supported PPA (only if needed).
+
+Basic check:
+
+```bash
+glxinfo | grep "OpenGL renderer"
+```
+
+Install `mesa-utils` for diagnostics:
+
+```bash
+sudo apt install -y mesa-utils
+```
+
+## 8. Wi‑Fi and Bluetooth firmware
+
+Check available interfaces:
+
+```bash
+ip link
+```
+
+If a Wi‑Fi device is present but not working, check `dmesg` for firmware messages (`dmesg | grep -i firmware`), then install the vendor firmware package, for example:
+
+```bash
+sudo apt install -y linux-firmware-iwlwifi
+sudo modprobe -r iwlwifi && sudo modprobe iwlwifi
+```
+
+For Broadcom chipsets, the `bcmwl-kernel-source` package is commonly required:
+
+```bash
+sudo apt update
+sudo apt install -y bcmwl-kernel-source
+sudo modprobe -r b43 bcma wl && sudo modprobe wl
+```
+
+## 9. Docker (for containerized development)
+
+Install Docker via the official repository to get up-to-date releases:
+
+```bash
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io
+sudo usermod -aG docker $USER
+newgrp docker
+docker run --rm hello-world
+```
+
+Log out and back in to apply group changes permanently.
+
+## 10. Secure Boot considerations
+
+If Secure Boot is enabled, kernel modules that are not signed may be blocked. For third-party drivers (NVIDIA) DKMS packages will usually trigger a MOK enrollment prompt. If you encounter unsigned module errors, either disable Secure Boot in firmware or sign modules (advanced).
+
+## 11. Basic firewall and SSH
+
+Enable uncomplicated firewall and allow SSH if you need remote access:
+
+```bash
+sudo apt install -y ufw
+sudo ufw allow OpenSSH
+sudo ufw enable
+
+sudo apt install -y openssh-server
+sudo systemctl enable --now ssh
+```
+
+## 12. Test small C program and debugging toolchain
+
+Create `~/projects/hello.c`:
+
+```c
+#include <stdio.h>
+int main(){ printf("hello\n"); return 0; }
+```
+
+Build and run:
+
+```bash
+gcc -g -O0 -o hello ~/projects/hello.c
+./hello
+gdb ./hello
+```
+
+## 13. Troubleshooting commands (collection)
+
+- `dmesg` — kernel messages
+- `journalctl -b` — boot logs
+- `sudo lshw -C network` — hardware list for network
+- `lspci -k` — device and driver mapping
+- `lsmod | grep <module>` — check loaded modules
+
+<Aside type="tip" title="Keep snapshots of changes">
+When making driver or kernel changes, keep a note of commands and consider taking a filesystem snapshot or backup so you can revert if needed.
+</Aside>
+
+## Next steps
+
+If you want, I will now produce:
+- a per-command walkthrough for Ubuntu 24.04 with copyable commands for NVIDIA, Wi‑Fi (Intel/Broadcom), and DKMS module building; and
+- matching Chinese translations.
+
+Which specific driver/topic should I expand first? NVIDIA, Wi‑Fi, DKMS, or Secure Boot module signing?

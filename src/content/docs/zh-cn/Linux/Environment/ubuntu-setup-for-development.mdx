@@ -1,0 +1,199 @@
+---
+title: "Ubuntu：面向开发者的一步步搭建指南"
+description: "针对初学者的逐步指南：更新、用户创建、安装开发工具、驱动与内核头文件、Docker 以及常用排错命令。"
+sidebar:
+  order: 20
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+本文引导初学者准备一个干净的 Ubuntu 系统以进行开发工作。逐步执行命令，按需复制粘贴。必要时解释操作原因。
+
+## 1. 更新系统并安装基础工具
+
+打开终端并执行：
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y build-essential curl wget git ca-certificates gnupg lsb-release
+```
+
+- `build-essential` 含 GCC、`make` 与必要头文件。
+- `gnupg` 与 `lsb-release` 用于添加第三方仓库时的签名与版本识别。
+
+## 2. 创建开发用户与目录结构
+
+如果使用安装时创建的用户，可跳过创建用户。否则创建常规用户（不要用 `root` 做日常开发）：
+
+```bash
+sudo adduser devuser
+sudo usermod -aG sudo devuser
+su - devuser
+mkdir -p ~/projects ~/bin
+```
+
+将工程放在 `~/projects`，个人脚本放 `~/bin`（如需加入 `PATH` 后面配置）。
+
+## 3. 配置 Git
+
+设置全局用户名、邮箱与默认编辑器：
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email you@example.com
+git config --global core.editor "nvim"
+git config --global credential.helper cache
+```
+
+## 4. 安装编辑器（Neovim）与语言工具链
+
+安装 Neovim 与 Python 支持：
+
+```bash
+sudo apt install -y neovim python3-pip
+pip3 install --user pynvim
+```
+
+对于 Node、Python 等工具链，建议使用官方或社区推荐的版本管理器（NodeSource、pyenv、rbenv 等）。
+
+## 5. 安装内核头与 DKMS（用于构建模块）
+
+安装与当前内核匹配的头文件：
+
+```bash
+sudo apt install -y linux-headers-$(uname -r) dkms
+```
+
+若运行自定义内核，请从仓库中安装对应版本的 `linux-headers-<version>`。
+
+## 6. 图形驱动（NVIDIA）— 安全步骤说明
+
+Ubuntu 提供了 `ubuntu-drivers` 来自动安装经测试的闭源驱动：
+
+```bash
+sudo ubuntu-drivers devices
+sudo ubuntu-drivers autoinstall
+```
+
+安装后重启。若启用了 Secure Boot，重启时系统会提示注册 MOK（Machine-Owner Key）——按提示完成密钥注册以允许未签名模块加载。
+
+如需手动安装指定驱动：
+
+```bash
+sudo apt install -y nvidia-driver-535
+sudo reboot
+```
+
+验证驱动：
+
+```bash
+nvidia-smi
+```
+
+若失败，检查 `dmesg` 与 `journalctl -u systemd-modules-load` 的错误信息以诊断 DKMS 或模块加载问题。
+
+## 7. Mesa / Intel / AMD（开源驱动）
+
+Intel 与 AMD GPU 通常可用 Mesa。可通过 `mesa-utils` 进行基本诊断：
+
+```bash
+sudo apt install -y mesa-utils
+glxinfo | grep "OpenGL renderer"
+```
+
+如果需要更近版本的 Mesa，可考虑受支持的 PPA，但仅在确有必要时使用。
+
+## 8. Wi‑Fi 与蓝牙固件
+
+检查接口：
+
+```bash
+ip link
+```
+
+若设备存在但不可用，查看固件日志：
+
+```bash
+dmesg | grep -i firmware
+```
+
+安装常见固件示例（Intel iwlwifi）：
+
+```bash
+sudo apt install -y linux-firmware-iwlwifi
+sudo modprobe -r iwlwifi && sudo modprobe iwlwifi
+```
+
+Broadcom 常见驱动：
+
+```bash
+sudo apt update
+sudo apt install -y bcmwl-kernel-source
+sudo modprobe -r b43 bcma wl && sudo modprobe wl
+```
+
+## 9. 容器（Docker）
+
+通过官方仓库安装 Docker：
+
+```bash
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io
+sudo usermod -aG docker $USER
+newgrp docker
+docker run --rm hello-world
+```
+
+重新登录以使用户组更改生效。
+
+## 10. Secure Boot 与内核模块
+
+若启用 Secure Boot，未签名模块可能被阻止加载。第三方驱动的 DKMS 包通常会触发 MOK 注册提示。若遇到未签名模块错误，可选择在固件中禁用 Secure Boot 或签名模块（高级操作）。
+
+## 11. 防火墙与 SSH
+
+启用 `ufw` 并允许 SSH（如需远程访问）：
+
+```bash
+sudo apt install -y ufw
+sudo ufw allow OpenSSH
+sudo ufw enable
+
+sudo apt install -y openssh-server
+sudo systemctl enable --now ssh
+```
+
+## 12. 编译与调试示例
+
+创建 `~/projects/hello.c`：
+
+```c
+#include <stdio.h>
+int main(){ printf("hello\n"); return 0; }
+```
+
+构建并运行：
+
+```bash
+gcc -g -O0 -o hello ~/projects/hello.c
+./hello
+gdb ./hello
+```
+
+## 13. 常用排错命令
+
+- `dmesg` — 内核消息
+- `journalctl -b` — 启动日志
+- `sudo lshw -C network` — 网络硬件列表
+- `lspci -k` — 设备与驱动对应
+- `lsmod | grep <module>` — 查看已加载模块
+
+<Aside type="tip" title="记录变更以便回滚">
+在进行驱动或内核相关更改前记录操作步骤，并考虑备份或使用快照以便回滚。
+</Aside>
+
+下一步我可以基于此为你逐步展开：
+- 针对 Ubuntu 24.04 的 NVIDIA 驱动逐行安装与故障排查（中英对照）；
+- 或先做 Wi‑Fi 固件与 Broadcom / Intel 示例的逐步教程。你想先看哪一个？

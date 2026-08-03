@@ -1,0 +1,36 @@
+---
+title: "Introduction to Tiling Window Managers"
+description: "Why developers use tiling window managers (i3, Sway), and how to get started with a minimal configuration."
+sidebar:
+  order: 15
+---
+import { Aside, FileTree } from '@astrojs/starlight/components';
+
+Tiling window managers organize windows in a grid-like layout and are favored by many developers for keyboard-driven workflows and low resource usage. Popular examples include `i3` (X11) and `sway` (Wayland).
+
+## Basic concepts
+
+- Workspaces: named virtual desktops that group windows.
+- Tiling: windows automatically resize to fill available space.
+- Floating windows: exceptions for dialogs or graphical tools.
+
+## A minimal `i3` config
+
+Place a file at `~/.config/i3/config` with core bindings and a launcher:
+
+```
+set $mod Mod4
+bindsym $mod+Return exec alacritty
+bindsym $mod+d exec dmenu_run
+workspace 1 output HDMI-1
+```
+
+## Getting started steps
+
+1. Install `i3` or `sway` from your package manager.
+2. Create a minimal config with a terminal and launcher binding.
+3. Learn workspace switching and window movement shortcuts.
+
+<Aside type="tip" title="Try in a VM or separate session">
+Test a new window manager in a virtual machine or a dedicated user session to avoid locking yourself out of a working desktop environment while learning.
+</Aside>

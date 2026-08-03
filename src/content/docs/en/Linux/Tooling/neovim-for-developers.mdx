@@ -1,0 +1,57 @@
+---
+title: "Neovim for Developers"
+description: "A pragmatic introduction to configuring Neovim for code editing: minimal `init.lua`, LSP, completion, and common plugins."
+sidebar:
+  order: 13
+---
+import { Aside, CardGrid, Card } from '@astrojs/starlight/components';
+
+Neovim provides a fast, extensible editing environment suited to programming when configured with a small set of plugins and an LSP client. This article shows a minimal, modern setup without imposing a particular plugin manager.
+
+## Minimal `init.lua`
+
+Place the file at `~/.config/nvim/init.lua`:
+
+```lua
+-- minimal init.lua
+vim.o.number = true
+vim.o.expandtab = true
+vim.o.shiftwidth = 2
+
+require('plugins') -- keep plugins in a separate file
+require('lsp')
+```
+
+This separation keeps the core settings small and the plugin configuration isolated.
+
+## Language Server Protocol (LSP)
+
+Use `nvim-lspconfig` to connect Neovim to language servers. Example (Lua):
+
+```lua
+local lspconfig = require('lspconfig')
+lspconfig.pyright.setup({})
+lspconfig.lua_ls.setup({})
+```
+
+## Plugins and plugin managers
+
+Popular plugin managers include `lazy.nvim` and `packer.nvim`. A small plugin set for development includes: LSP client, completion engine (nvim-cmp), treesitter for syntax, and a file explorer.
+
+<CardGrid>
+  <Card title="LSP" description="nvim-lspconfig + language servers provides diagnostics and go-to-definition."/>
+  <Card title="Completion" description="nvim-cmp supplies completion items from LSP and buffers."/>
+  <Card title="Syntax" description="treesitter offers accurate highlighting and structural selection."/>
+</CardGrid>
+
+<Aside type="tip" title="Start small and iterate">
+Begin with a tiny configuration that only adds LSP and completion. Add other plugins only when you need them, to keep startup time predictable.
+</Aside>
+
+## Testing your setup
+
+Open a project and verify:
+
+1. Diagnostics appear for syntax/type errors.
+2. `gd` or `vim.lsp.buf.definition()` jumps to symbol definitions.
+3. Completion suggestions are shown automatically while typing.

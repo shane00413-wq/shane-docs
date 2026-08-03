@@ -1,0 +1,55 @@
+---
+title: "Bluetooth Drivers and Troubleshooting on Ubuntu"
+description: "Install and troubleshoot Bluetooth using BlueZ, verify firmware, pair devices with `bluetoothctl`, and common fixes." 
+sidebar:
+  order: 27
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This guide covers installing BlueZ, ensuring firmware and kernel modules are loaded, and using `bluetoothctl` to pair devices.
+
+## 1 Install BlueZ and tools
+
+```bash
+sudo apt update
+sudo apt install -y bluez bluez-tools bluetooth
+sudo systemctl enable --now bluetooth
+```
+
+## 2 Check hardware and modules
+
+```bash
+lsusb
+lspci -nnk | grep -i bluetooth -A3
+lsmod | grep btusb
+```
+
+If `btusb` is not loaded, try: `sudo modprobe btusb`.
+
+## 3 Pairing with bluetoothctl
+
+```bash
+bluetoothctl
+# inside interactive prompt
+power on
+agent on
+default-agent
+scan on
+# wait for device to appear
+pair <MAC>
+trust <MAC>
+connect <MAC>
+```
+
+## 4 Troubleshooting
+
+<Steps>
+- Check rfkill: `rfkill list all` — unblock if soft/ hard blocked.
+- Check `journalctl -u bluetooth -n 200` for daemon errors.
+- For missing firmware, `dmesg | grep -i bluetooth` often shows filename; install `linux-firmware` package or vendor firmware.
+- If pairing fails, try removing device (`remove <MAC>`) and re-pair.
+</Steps>
+
+<Aside type="note" title="Headless pairing">
+For headless devices (no display), use `bluetoothctl`'s pairing agent with PIN or `--legacy` flags as needed by device.
+</Aside>

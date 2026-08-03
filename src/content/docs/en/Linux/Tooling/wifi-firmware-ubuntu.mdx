@@ -1,0 +1,87 @@
+---
+title: "Wi‑Fi Firmware and Drivers on Ubuntu"
+description: "How to detect wireless hardware, install vendor firmware (Intel, Broadcom), enable interfaces, and troubleshoot connectivity issues." 
+sidebar:
+  order: 23
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This article focuses on common Wi‑Fi chipsets and their firmware on Ubuntu. It guides detection, installing firmware packages, modprobe usage, and practical troubleshooting commands.
+
+## 1 Detect wireless hardware
+
+```bash
+lspci -nnk | grep -i network -A3
+lsusb
+iw dev
+```
+
+Look for `Intel Corporation Wireless` or `Broadcom` strings.
+
+## 2 Intel (iwlwifi) firmware
+
+Install the Intel firmware package and reload the module:
+
+```bash
+sudo apt update
+sudo apt install -y linux-firmware-iwlwifi
+sudo modprobe -r iwlwifi && sudo modprobe iwlwifi
+```
+
+Check kernel logs for firmware loading messages:
+
+```bash
+dmesg | grep -i iwl
+journalctl -k | tail -n 50
+```
+
+If the firmware file is missing, `dmesg` shows the exact file name (e.g., `iwlwifi-ty-a0-gf-a0-59.ucode`), and you can obtain it from the `linux-firmware` package or vendor sources.
+
+## 3 Broadcom
+
+Broadcom chips require different drivers depending on model. Common packages:
+
+- `bcmwl-kernel-source` — Broadcom STA (proprietary) for many chips
+- `firmware-brcm80211` or in `linux-firmware` — for some brcm chips
+
+Install STA driver (if recommended):
+
+```bash
+sudo apt update
+sudo apt install -y bcmwl-kernel-source
+sudo modprobe -r b43 bcma wl && sudo modprobe wl
+```
+
+Check `dmesg` for firmware messages if the interface fails to appear.
+
+## 4 Enabling and connecting
+
+With NetworkManager:
+
+```bash
+nmcli device status
+nmcli device wifi list
+nmcli device wifi connect "SSID" password "yourpass"
+```
+
+With wpa_supplicant (manual): create `/etc/wpa_supplicant/wpa_supplicant.conf` then:
+
+```bash
+sudo wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
+sudo dhclient wlan0
+```
+
+## 5 Troubleshooting checklist
+
+<Steps>
+- Check rfkill: `rfkill list all` — unblock with `sudo rfkill unblock all`.
+- Kernel messages: `dmesg | grep -i firmware`.
+- Interface state: `ip link`, `iw dev`, `nmcli device status`.
+- Capture logs: `journalctl -u NetworkManager -n 200`.
+- Try a live kernel (booted from live USB) to exclude current installation issues.
+- If module mismatch after kernel update, ensure `linux-headers-$(uname -r)` is installed and re-run DKMS builds.
+</Steps>
+
+<Aside type="note" title="Avoid random third-party drivers">
+Prefer distribution packages. Only use vendor binary blobs from third parties when absolutely necessary and follow their instructions exactly.
+</Aside>
