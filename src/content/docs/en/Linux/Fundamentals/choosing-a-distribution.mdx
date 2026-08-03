@@ -1,0 +1,47 @@
+---
+title: "Choosing a Distribution"
+description: "The core differences between Linux distributions, and what to weigh when picking a first distribution for development work."
+sidebar:
+  order: 1
+---
+import { Aside, CardGrid, Card } from '@astrojs/starlight/components';
+
+Linux, strictly speaking, refers to the kernel — not a complete, installable operating system on its own. What people install when they "install Linux" is actually a distribution (distro): a full system that bundles the kernel with a toolchain, a package manager, and a set of default configurations. Distributions mainly differ in package management, release cadence, and default software ecosystem — these are the dimensions worth weighing when picking a first distribution for development work.
+
+## Three major distribution families
+
+Most mainstream distributions fall into one of three families, distinguished primarily by their package manager and package-naming conventions:
+
+<CardGrid>
+	<Card title="Debian family" icon="seti:debian">
+		Rooted in Debian, with Ubuntu and Linux Mint as major derivatives. Uses the `.deb` package format, managed via `dpkg` (low-level) and `apt` (high-level). Repositories are clearly layered, and stability is prioritized.
+	</Card>
+	<Card title="Red Hat family" icon="seti:redhat">
+		Rooted in Red Hat Enterprise Linux (RHEL), with Fedora, CentOS Stream, and Rocky Linux as derivatives. Uses the `.rpm` format, managed via `dnf` (modern) or `yum` (legacy). Common in enterprise server environments.
+	</Card>
+	<Card title="Arch family" icon="seti:archlinux">
+		Represented by Arch Linux itself, with Manjaro as a derivative. Follows a rolling-release model, so package versions stay current at all times, managed via `pacman`. Highly configurable, but expects more troubleshooting experience from the user.
+	</Card>
+</CardGrid>
+
+## Differences in release strategy
+
+Distributions generally follow one of two release strategies. **Point release**, as used by Ubuntu LTS and Debian Stable, freezes package versions after release and only ships security patches — stability is high, but software versions lag behind upstream. **Rolling release**, as used by Arch Linux, continuously tracks upstream's latest versions, giving access to new features immediately, but at the cost of a higher chance of compatibility issues after an update, which requires the user to be able to diagnose problems independently.
+
+## The package manager shapes daily habits
+
+The most direct day-to-day difference between distributions shows up in package manager commands. Installing a package, for example:
+
+- Debian family: `apt install <package>`
+- Red Hat family: `dnf install <package>`
+- Arch family: `pacman -S <package>`
+
+The syntax differs, but the underlying problem being solved is the same: fetching a package and its dependencies from a repository, and handling install, removal, updates, and dependency resolution. Once a distribution family is chosen, most subsequent operations build on the syntax conventions of its package manager — this is the main reason the choice of distribution keeps affecting the day-to-day experience.
+
+## Recommendation for a development-focused start
+
+For someone starting out with the goal of learning a Linux development environment, the Debian family is a common starting point. Reasons include: broad repository and community-tutorial coverage, a relatively stable default state, and a high match rate between search results and the environment actually in use when troubleshooting. Unless stated otherwise, later material in this series that involves specific commands or configuration assumes a Debian-family environment (Ubuntu as the reference), with equivalents for other distributions noted where necessary.
+
+<Aside type="note" title="The choice isn't irreversible">
+Core concepts — the shell, the filesystem hierarchy, the permission model — are universal across distributions. The differences are concentrated in package management and default configuration. Building a working understanding of Linux on one distribution keeps the cost of switching to another relatively low later on.
+</Aside>

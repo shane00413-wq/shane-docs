@@ -1,0 +1,60 @@
+---
+title: "Getting Started with SSH"
+description: "The core problem SSH solves, the difference between password and key-based login, and using ~/.ssh/config to simplify connecting to multiple remote hosts."
+sidebar:
+  order: 10
+---
+import { Aside, Steps, FileTree } from '@astrojs/starlight/components';
+
+SSH (Secure Shell) is the dominant protocol for logging into a remote Linux host, providing encryption and authentication for the communication between a client and a remote host over an untrusted public network. "Connecting to the server," in the vast majority of everyday cases, means establishing an SSH connection.
+
+## The most basic way to connect
+
+```bash
+ssh username@hostname          # log in with a password
+ssh username@hostname -p 2222  # specify a non-default port (SSH's default port is 22)
+```
+
+The first time connecting to a host that hasn't been connected to before, the client displays that host's public key fingerprint and asks whether to trust it and continue — one of the mechanisms SSH uses to prevent a connection from being hijacked by a man-in-the-middle. Once confirmed, the fingerprint is recorded in the local `~/.ssh/known_hosts` file, so the same host won't trigger this prompt again on later connections. If that host's key ever changes, though — which could mean a man-in-the-middle attack, or could simply mean the host was reinstalled or its key was rotated — a clear warning is shown.
+
+## Password login vs. key-based login
+
+Password login requires typing the remote host's password by hand on every connection, which is tedious and also carries the risk of the password being brute-forced. Key-based login, based on asymmetric encryption, is the more recommended approach:
+
+<Steps>
+1. Generate a key pair (private and public key) locally: `ssh-keygen -t ed25519`, accepting the default save path when prompted, and optionally setting a passphrase for the key
+2. Add the public key's contents to the remote host's `~/.ssh/authorized_keys` file — the simplest way is running `ssh-copy-id username@hostname`, which does this automatically
+3. On later connections to that host, the client uses the local private key to complete an encrypted handshake proving its identity — no more typing the remote host's password
+</Steps>
+
+The private key file (`~/.ssh/id_ed25519` by default) should never leave the local machine or be shared with anyone else — the public key can be shared freely, but the private key is the credential itself. Setting a passphrase protects against the private key file itself being stolen (a lost device, for example) and then used directly; the passphrase is only ever checked locally and never travels over the network.
+
+<Aside type="danger" title="Private key file permissions matter">
+If a private key file's permissions are too permissive (readable by other users, for example), the SSH client refuses to use it and reports an error outright. Running `chmod 600 ~/.ssh/id_ed25519` to ensure only the file's owner can read or write it is the first thing to check when key-based login fails.
+</Aside>
+
+## Simplifying repeated connections with a config file
+
+For hosts connected to often, or for keeping track of several hosts' connection details, putting the parameters in `~/.ssh/config` is more efficient than typing out the full command every time:
+
+```
+Host myserver
+    HostName 203.0.113.10
+    User deploy
+    Port 2222
+    IdentityFile ~/.ssh/id_ed25519
+```
+
+Once configured, running `ssh myserver` alone is enough — the name after `Host` is a local alias, while `HostName` is the actual address being connected to. This file can hold a separate username, port, and private key path for each host, avoiding the need to type out full parameters every time.
+
+<FileTree>
+- ~/.ssh/
+  - id_ed25519 private key, permissions must be tightly restricted
+  - id_ed25519.pub public key, safe to share
+  - known_hosts records fingerprints of previously connected hosts
+  - config host aliases and connection parameters
+</FileTree>
+
+## Key takeaways
+
+Trust in an SSH connection is built from two parts: the local machine confirms, via `known_hosts`, that the remote host's identity hasn't been spoofed, and the remote host confirms, via a password or a key, that whoever is connecting actually holds the corresponding credential. Key-based login has the edge over password login in both security and convenience, and is the recommended approach for the vast majority of real-world use.

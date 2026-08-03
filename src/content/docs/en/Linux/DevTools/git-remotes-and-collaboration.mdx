@@ -1,0 +1,53 @@
+---
+title: "Remote Repositories and Git Collaboration"
+description: "What clone, push, pull, and fetch each do, how a local branch relates to a remote-tracking branch, and a basic approach to handling conflicts during collaboration."
+sidebar:
+  order: 3
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Everything covered in the previous two sections happens within a single machine's local repository. Collaborating with others, or syncing the same code across devices, requires the concept of a remote repository — another copy of the repository hosted elsewhere (typically a platform like GitHub or GitLab, or a self-hosted server), synced with the local repository over the network by exchanging commits.
+
+## Cloning an existing repository
+
+```bash
+git clone https://github.com/user/repo.git
+```
+
+Cloning downloads the remote repository's complete history to the local machine, and automatically records that remote address under a reference named `origin` — a common convention, not an enforced rule.
+
+```bash
+git remote -v             # list every remote address configured for the current repository
+git remote add upstream https://github.com/other/repo.git   # add another remote reference
+```
+
+## push and pull: the two directions of syncing
+
+```bash
+git push origin main      # push new commits from the local main branch to the remote's main branch
+git pull origin main      # fetch new commits from the remote's main branch and merge them into the current local branch
+```
+
+`git pull` is actually a combination of two steps: it runs `git fetch` first (downloading the remote's latest commits without changing any local branch), then `git merge` (merging the just-downloaded remote commits into the current branch). This is also why running `git fetch` alone leaves local files unchanged — downloading and merging are two independent actions, and `pull` simply bundles them into one.
+
+## Local branches vs. remote-tracking branches
+
+After a clone or a pull, there are actually two related but distinct kinds of branch references locally: a local branch (like `main`) can be freely committed to and switched; a remote-tracking branch (like `origin/main`) is a local, read-only record of "what that branch looked like on the remote as of the last sync" — it only updates on `fetch` or `pull`, and never changes automatically alongside local commits.
+
+The common `git status` message about the current branch being "ahead/behind by N commits" is comparing a local branch against its corresponding remote-tracking branch — not connecting to the remote in real time.
+
+## When a push gets rejected
+
+```
+! [rejected]        main -> main (fetch first)
+```
+
+This means the remote's `main` branch already has commits the local repository doesn't know about — likely pushed by another collaborator — and local and remote history have diverged. Git refuses to push directly to avoid overwriting those commits. The correct sequence is running `git pull` first to sync down the remote's new commits, completing a merge locally (resolving any conflicts if needed), and then running `git push` again.
+
+<Aside type="caution" title="Avoid using --force to overwrite remote history">
+`git push --force` overwrites the remote branch with local history unconditionally, regardless of whether the remote has commits the local repository hasn't synced — those commits get discarded outright and are hard to recover. In a team setting, this should only be used when fully aware of the consequences (cleaning up temporary commits on a personal branch, for instance) — it should be avoided on shared branches like `main`.
+</Aside>
+
+## Fork and pull request: collaboration at the platform level
+
+Platforms like GitHub and GitLab add two concepts on top of Git itself: forking (copying someone else's repository into one's own account) and pull requests / merge requests (proposing that certain commits from a fork be merged into the original repository, for the original maintainer to review). Both are collaboration mechanisms provided by the platform, not features of Git itself — at the level of Git commands, a forked repository is no different from any other remote repository.

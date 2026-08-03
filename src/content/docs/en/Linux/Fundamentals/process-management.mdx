@@ -1,0 +1,59 @@
+---
+title: "Process Management Basics"
+description: "Checking process state with ps and top, switching a job between foreground and background, and what sending a signal with kill actually means."
+sidebar:
+  order: 9
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Every running program on a system corresponds to one or more processes, each with a unique process ID (PID). Inspecting process state and controlling when a process starts and stops is a category of operations that comes up constantly in day-to-day administration and debugging.
+
+## Inspecting processes: ps and top
+
+```bash
+ps aux              # list every process for every user on the system, a static snapshot
+ps aux | grep nginx  # combined with a pipe, filter to processes with "nginx" in the name
+top                  # a continuously refreshing process monitor, sorted by resource usage
+```
+
+Each column in `ps aux`'s output corresponds to the user, PID, CPU usage, memory usage, start time, elapsed run time, and the full command being run — it's a one-time snapshot that doesn't update after it runs. `top`, by contrast, is a live view that keeps refreshing, sorted by CPU usage from highest to lowest by default — useful for tracking down "which process is currently eating up resources." Press `q` to quit.
+
+## Foreground and background: &, jobs, fg, bg
+
+A command runs in the foreground by default, meaning the shell waits for it to finish before showing the prompt again for the next command. Appending `&` to a command sends it to the background instead — the shell doesn't wait, and returns the prompt immediately:
+
+```bash
+long-running-command &   # starts in the background; the shell returns the prompt right away
+jobs                      # list background jobs in the current shell session
+fg %1                     # bring job number 1 back to the foreground
+bg %1                     # resume a paused job number 1, running it in the background
+```
+
+A job running in the foreground can be paused (not terminated — just suspended) with `Ctrl + Z`. A paused job can then either be sent to the background with `bg` to keep running, or brought back to the foreground with `fg`.
+
+## Terminating processes: kill and signals
+
+The name `kill` is a bit misleading — what it actually does isn't "force-terminate," it's "send a signal to a process." Process termination is just one possible outcome of how that signal gets handled.
+
+```bash
+kill <PID>           # send SIGTERM (15), requesting a normal exit
+kill -9 <PID>        # send SIGKILL (9), force-terminate immediately; the process can't intercept or handle it
+kill -l               # list every available signal name and number
+```
+
+`SIGTERM` (the default signal) tells a process "please clean up and exit." A process can catch this signal and perform cleanup — saving data, releasing resources — before actually exiting, making it the safer way to stop something. `SIGKILL`, on the other hand, is enforced directly by the kernel — the process gets no chance to respond or clean up at all, and it's typically reserved for cases where `SIGTERM` didn't work and the process is genuinely stuck.
+
+<Aside type="caution" title="Try SIGTERM first; SIGKILL is a last resort">
+Jumping straight to `kill -9` skips a process's normal shutdown routine, which can mean losing unsaved data or leaving behind temporary or lock files that never got cleaned up. A more reliable sequence is running plain `kill` first (equivalent to `SIGTERM`), waiting a few seconds to see whether the process exits on its own, and only reaching for `-9` once that's confirmed not to have worked.
+</Aside>
+
+## Finding and killing processes by name: pkill and killall
+
+When operating by process name rather than PID is more convenient, `pkill` and `killall` are the more direct tools:
+
+```bash
+pkill nginx          # match by name and send a signal (SIGTERM by default); supports partial matches
+killall nginx        # match by exact process name and send a signal
+```
+
+Both accept a `-9` flag to send `SIGKILL`, used the same way as `kill -9` — just with a process name as the target instead of a PID.

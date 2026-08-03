@@ -1,0 +1,43 @@
+---
+title: "The Filesystem Hierarchy Standard"
+description: "What each standard directory under the Linux root is for, and why the Filesystem Hierarchy Standard (FHS) is the basis for understanding how a system is laid out."
+sidebar:
+  order: 2
+---
+import { Aside, FileTree } from '@astrojs/starlight/components';
+
+Everything on a Linux system is mounted under a single root directory, `/` — there is no equivalent of Windows-style separate drive letters. Different distributions organize this root directory in a highly consistent way, because they all follow the same convention: the Filesystem Hierarchy Standard (FHS). Understanding what each directory under this standard is for is the basis for locating configuration files, installing software, and troubleshooting later on.
+
+## The core layout under root
+
+<FileTree>
+- /
+  - bin/ executables for core commands (usually a symlink to /usr/bin on modern distributions)
+  - boot/ boot loader and kernel-related files
+  - dev/ device files — hardware exposed here as files
+  - etc/ system-wide configuration files
+  - home/ personal directories for regular users
+  - lib/ shared libraries required at runtime
+  - opt/ optional install location for third-party software
+  - proc/ a virtual filesystem exposing kernel and process information
+  - root/ the root user's personal directory (not the root directory itself)
+  - tmp/ temporary files, usually cleared on reboot
+  - usr/ the primary location for user-space programs and resources
+  - var/ frequently-changing data, such as logs and caches
+</FileTree>
+
+## A few directories worth distinguishing
+
+**`/etc` vs. configuration under `/home`**: system-wide configuration (affecting all users) lives under `/etc` — network settings, service configuration, and so on. Per-user configuration (affecting only the current user) lives under that user's `/home/<username>` directory, usually as dotfiles such as `.bashrc` or `.gitconfig`. The two operate at different scopes, so troubleshooting a configuration issue starts with confirming which layer was actually changed.
+
+**`/bin`, `/usr/bin`, and `/usr/local/bin`**: all three hold executables, but differ by origin. `/usr/bin` holds programs installed by the distribution's package manager. `/usr/local/bin` holds programs installed outside the package manager — compiled manually or downloaded separately. `/bin` on most modern distributions is simply a symlink to `/usr/bin`, kept only for backward compatibility. This is also why tools built and installed by hand typically end up in `/usr/local/bin` rather than `/usr/bin`.
+
+**`/proc`**: this is a virtual filesystem — the files inside it don't correspond to data actually stored on disk, but are generated dynamically by the kernel at runtime to reflect the current system state. `/proc/cpuinfo`, for example, shows CPU details, and `/proc/<pid>/` holds runtime information for the process with that PID. This directory comes up frequently when inspecting or diagnosing system state.
+
+<Aside type="tip" title="Run man hier for the full specification">
+Running `man hier` shows the current system's full description of the FHS directly in the terminal, covering directories not listed here — a more authoritative and offline-available reference than searching online.
+</Aside>
+
+## Why this layout is worth memorizing
+
+Later work — installing software, configuring services, writing scripts — will almost inevitably touch this directory structure. Figuring out why a command "installed but won't run," for instance, often comes down to it having landed in a directory not covered by the `PATH` environment variable; figuring out why a service's configuration change had no effect often starts with confirming whether the correct configuration file, at the correct layer, was actually edited. Building an overall mental model of this hierarchy meaningfully cuts down on blind trial-and-error during later troubleshooting.

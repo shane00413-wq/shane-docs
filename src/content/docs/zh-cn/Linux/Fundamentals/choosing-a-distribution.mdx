@@ -1,0 +1,47 @@
+---
+title: "选择发行版"
+description: "Linux 发行版之间的核心差异，以及新手在选择第一个开发用发行版时应该关注的几个维度。"
+sidebar:
+  order: 1
+---
+import { Aside, CardGrid, Card } from '@astrojs/starlight/components';
+
+Linux 本身指的是内核（Kernel），并不能独立构成一个可以直接安装使用的操作系统。日常说的"装个 Linux"，实际安装的是某个发行版（Distribution，简称 Distro）——由内核、系统工具链、包管理器、默认配置打包在一起的完整系统。不同发行版之间的差异，主要体现在包管理方式、更新节奏和默认软件生态这几个维度上，这也是选择第一个开发用发行版时最值得关注的地方。
+
+## 三大发行版家族
+
+绝大多数主流发行版可以归入三个家族，彼此之间的区别主要体现在包管理器和软件包命名规则上：
+
+<CardGrid>
+	<Card title="Debian 系" icon="seti:debian">
+		以 Debian 为源头，衍生出 Ubuntu、Linux Mint 等发行版。使用 `.deb` 包格式，包管理器为 `dpkg`（底层）与 `apt`（上层）。软件仓库分层明确，稳定性优先。
+	</Card>
+	<Card title="Red Hat 系" icon="seti:redhat">
+		以 Red Hat Enterprise Linux（RHEL）为源头，衍生出 Fedora、CentOS Stream、Rocky Linux 等。使用 `.rpm` 包格式，包管理器为 `dnf`（现代）或 `yum`（旧版）。企业服务器场景中占比较高。
+	</Card>
+	<Card title="Arch 系" icon="seti:archlinux">
+		以 Arch Linux 为代表，衍生出 Manjaro 等。使用滚动更新（Rolling Release）模式，软件版本始终保持最新，包管理器为 `pacman`。配置灵活度高，但对使用者的排错能力要求也更高。
+	</Card>
+</CardGrid>
+
+## 更新模式的差异
+
+发行版在版本发布策略上通常分两类。**固定版本发布（Point Release）**，如 Ubuntu LTS、Debian Stable，系统在发布之后的软件包版本会长期保持不变，只推送安全补丁，稳定性高，但软件版本相对滞后。**滚动更新（Rolling Release）**，如 Arch Linux，软件包持续跟随上游最新版本更新，能第一时间用到新特性，但也意味着更新出现兼容性问题的概率更高，需要具备独立排查问题的能力。
+
+## 包管理器决定的是日常操作习惯
+
+发行版之间最直接的使用差异体现在包管理器的命令上。以安装一个软件包为例：
+
+- Debian 系：`apt install <package>`
+- Red Hat 系：`dnf install <package>`
+- Arch 系：`pacman -S <package>`
+
+命令语法不同，但背后解决的问题是一致的：从软件仓库下载软件包及其依赖，完成安装、卸载、更新和依赖解析。选定一个发行版家族之后，后续大部分操作都会建立在对应包管理器的语法习惯之上，这也是发行版选择会持续影响使用体验的核心原因。
+
+## 面向开发场景的建议
+
+对于以学习 Linux 开发环境为目标的初学阶段，Debian 系是较为常见的起点选择，原因包括：软件仓库和第三方教程资源覆盖面广，系统默认状态相对稳定，遇到问题时搜索到的解决方案适配度高。本系列后续涉及具体命令和配置的内容，默认以 Debian 系（以 Ubuntu 为代表）的环境作为参照，其他发行版下的等效操作会在必要时单独说明。
+
+<Aside type="note" title="发行版选择不是不可逆的">
+不同发行版之间的核心概念（Shell、文件系统层级、权限模型）是通用的，差异主要集中在包管理和默认配置层面。先从一个发行版建立起对 Linux 的基本认知，之后切换到其他发行版的迁移成本并不高。
+</Aside>

@@ -1,0 +1,59 @@
+---
+title: "Introduction to Make and Build Automation"
+description: "The basic syntax of a Makefile, how rules, targets, dependencies, and commands relate to each other, and how Make uses timestamps to decide which files need rebuilding."
+sidebar:
+  order: 6
+---
+import { Aside, FileTree } from '@astrojs/starlight/components';
+
+Turning source code into an executable, as covered earlier, goes through preprocessing, compilation, assembly, and linking. Once a project grows even slightly — more source files — manually retyping these commands after every change becomes tedious fast, and it's easy to forget to rebuild something that should have been. Make is the classic build-automation tool for exactly this problem.
+
+## The basic structure of a Makefile
+
+Make's behavior is defined by a file named `Makefile`, where each rule follows a fixed structure:
+
+```makefile
+target: dependencies
+	command
+```
+
+- **Target**: the name of the file this rule ultimately produces, or a name used purely to trigger an action and not tied to a real file (called a phony target)
+- **Dependencies**: the list of files that need to already exist, or be up to date, before this target can be built
+- **Command**: the shell command actually run to produce the target
+
+<Aside type="caution" title="Commands must be indented with a tab, not spaces">
+The indentation before a command line in a Makefile must, by syntax, be a single tab character — indenting with spaces fails outright with a `missing separator` error. This is one of the easiest mistakes to make in Makefile syntax, especially when a text editor is set to auto-convert tabs into spaces.
+</Aside>
+
+## A concrete example
+
+```makefile
+hello: hello.o
+	gcc hello.o -o hello
+
+hello.o: hello.c
+	gcc -c hello.c -o hello.o
+
+clean:
+	rm -f hello hello.o
+```
+
+This Makefile defines three rules: producing `hello` depends on `hello.o`, and producing `hello.o` depends on `hello.c`. Running `make` (which, without arguments, runs the target from the first rule by default) makes Make trace back through the dependency chain — it sees that `hello` depends on `hello.o`, which in turn depends on `hello.c`, and runs the corresponding commands in the correct order until the final target is built.
+
+The `clean` rule doesn't correspond to any file actually being produced — it exists purely to run the action of "delete build artifacts." Rules like this are called phony targets, invoked by naming the target explicitly: `make clean`.
+
+## Incremental builds: only reprocessing what changed
+
+Make decides whether a rule needs to run again based on file modification timestamps: the corresponding command only runs if a dependency's modification time is newer than the target's (or if the target doesn't exist at all). If the target is already newer than all of its dependencies, it's considered up to date, and Make skips the rule rather than running it again.
+
+This means that after only changing `hello.c` and re-running `make`, Make notices `hello.c` is newer than `hello.o`, recompiles to produce a new `hello.o`, then notices the new `hello.o` is newer than `hello`, and relinks — but if the change instead touched some other file entirely unrelated to `hello`, the relevant rules aren't triggered at all, avoiding unnecessary recompilation. The more files a project has, the more time this incremental behavior saves.
+
+## Common built-in variables
+
+<FileTree>
+- $@ the current rule's target name
+- $< the first file in the current rule's dependency list
+- $^ every file in the current rule's dependency list
+</FileTree>
+
+Using these, the earlier Makefile can be written more concisely: the command for the `hello.o: hello.c` rule can be written as `gcc -c $< -o $@`, without repeating the specific filenames — reducing the hassle of needing to update multiple places whenever a filename changes.

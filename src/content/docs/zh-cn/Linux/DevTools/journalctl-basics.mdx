@@ -1,0 +1,65 @@
+---
+title: "日志查看与 journalctl"
+description: "journald 集中式日志管理相对传统文本日志文件的区别，journalctl 常用的按服务、按时间、实时跟踪查看日志的方法。"
+sidebar:
+  order: 10
+---
+import { Aside } from '@astrojs/starlight/components';
+
+上一节提到的 systemd 管理的各个服务，运行过程中产生的日志默认并不是各自写入独立的文本文件，而是统一交给 systemd 的日志组件 journald 集中收集管理。`journalctl` 是查看这些日志的命令行工具。
+
+## 集中式日志相比传统日志文件的区别
+
+早期 Linux 服务的日志普遍是各自写入 `/var/log/` 下的独立文本文件（如 `/var/log/nginx/error.log`），格式由各个服务自行决定，查看和过滤方式也因服务而异。journald 把这一层统一起来：不同服务的日志被结构化地记录进统一的二进制格式日志（存放在 `/var/log/journal/` 或 `/run/log/journal/`，取决于是否配置了持久化存储），附带统一的元信息（时间戳、来源服务、日志级别等），可以用同一套命令按多种维度筛选查看，不需要针对每个服务分别记住日志文件路径和格式。
+
+<Aside type="note" title="journald 不是要完全取代传统日志文件">
+不少服务(比如 nginx)出于兼容性考虑,默认仍然会同时把日志写进自己的文本文件里,journald 收集的是系统日志层面的记录,两者可以并存,不冲突。
+</Aside>
+
+## 基础查看
+
+```bash
+journalctl                    # 查看全部日志,从最旧到最新
+journalctl -r                 # 反向显示,从最新到最旧
+journalctl -e                 # 直接跳转到日志末尾(最新的记录)
+```
+
+## 按服务筛选
+
+```bash
+journalctl -u nginx           # 只查看 nginx.service 产生的日志
+journalctl -u nginx -u ssh    # 同时查看多个服务的日志
+```
+
+`-u` 参数指定 unit 名称,是排查某个具体服务问题时最常用的筛选方式,前面 `systemctl status` 显示的日志片段,本质上就是这条命令的一个精简版本。
+
+## 按时间筛选
+
+```bash
+journalctl --since "2026-08-01"                  # 查看指定日期之后的日志
+journalctl --since "1 hour ago"                  # 支持相对时间表达
+journalctl --since "09:00" --until "10:00"       # 查看指定时间段内的日志
+```
+
+## 实时跟踪:类似 tail -f
+
+```bash
+journalctl -f                 # 实时输出新产生的日志,类似 tail -f
+journalctl -u nginx -f        # 实时跟踪指定服务的日志
+```
+
+`-f` 在需要观察一个服务当前正在发生什么(比如重启服务后确认是否正常启动、复现某个问题时实时查看报错)的场景中非常常用，命令会持续占用当前终端，按 `Ctrl+C` 结束跟踪。
+
+## 磁盘占用与日志清理
+
+journald 的日志默认会持续累积，长期运行的服务器可能需要关注其磁盘占用：
+
+```bash
+journalctl --disk-usage           # 查看当前日志占用的磁盘空间
+sudo journalctl --vacuum-time=7d  # 清理 7 天之前的日志
+sudo journalctl --vacuum-size=500M # 清理日志直到总占用不超过 500M
+```
+
+<Aside type="tip" title="日志级别筛选">
+`journalctl -p err` 只显示错误级别及以上(更严重)的日志,`-p` 参数支持的级别包括 `emerg`、`alert`、`crit`、`err`、`warning`、`notice`、`info`、`debug`,数字越小代表越严重,排查问题时先从较高严重级别筛起,能有效缩小需要人工查看的日志范围。
+</Aside>

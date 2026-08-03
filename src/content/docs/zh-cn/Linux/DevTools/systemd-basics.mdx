@@ -1,0 +1,60 @@
+---
+title: "systemd 与服务管理基础"
+description: "systemd 作为 init 系统的角色，unit 文件的基本结构，以及 systemctl 管理服务启动、停止、开机自启的常用命令。"
+sidebar:
+  order: 9
+---
+import { Aside } from '@astrojs/starlight/components';
+
+系统开机时，内核完成初始化之后，第一个被启动的用户空间进程叫 init 进程（PID 恒为 1），负责启动系统运行所需的各种后台服务，并在服务异常退出时按配置决定是否重启它。systemd 是目前绝大多数主流发行版采用的 init 系统实现，`systemctl` 是与它交互的主要命令行工具。
+
+## unit:systemd 管理的基本单位
+
+systemd 把它管理的每一项资源都称为一个 unit，服务只是其中最常见的一种类型（`.service`），其他类型还包括挂载点（`.mount`）、定时任务（`.timer`）等。一个服务 unit 的配置文件大致结构如下：
+
+```ini
+[Unit]
+Description=My Application
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/my-app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- `[Unit]` 段描述这个 unit 本身的信息,以及它依赖哪些其他 unit(`After` 表示"在指定 unit 之后启动",不代表强依赖关系,强依赖需要用 `Requires`)
+- `[Service]` 段描述具体的启动命令、异常退出后的重启策略等运行细节
+- `[Install]` 段描述这个 unit 被启用(enable)时,应该被关联到哪个启动目标(target)
+
+## 常用 systemctl 命令
+
+```bash
+sudo systemctl start nginx      # 立即启动服务
+sudo systemctl stop nginx        # 立即停止服务
+sudo systemctl restart nginx     # 重启服务
+sudo systemctl status nginx      # 查看服务当前状态和最近的日志片段
+sudo systemctl enable nginx      # 设置为开机自动启动(不会立即启动当前会话)
+sudo systemctl disable nginx     # 取消开机自动启动
+sudo systemctl enable --now nginx # 设置开机自启,并立即启动
+```
+
+<Aside type="note" title="start/stop 与 enable/disable 是两个独立的维度">
+`start`/`stop` 控制的是服务"现在是否在运行",`enable`/`disable` 控制的是服务"开机时是否会被自动启动",两者互不影响——一个服务可以是"当前正在运行,但没有设置开机自启"的状态,反之也可以是"设置了开机自启,但当前手动停止了"的状态。排查"重启服务器之后某个服务没起来"这类问题时,首先要确认的就是有没有执行过 `enable`。
+</Aside>
+
+## 服务修改配置后要 reload
+
+修改了某个服务本身的配置文件（而不是它的 unit 文件），大部分服务需要执行 `systemctl restart` 才能让改动生效；如果修改的是 unit 文件本身（比如改了 `ExecStart` 的启动参数），还需要先执行 `sudo systemctl daemon-reload`，让 systemd 重新读取磁盘上的 unit 文件内容，否则改动不会生效——因为 systemd 内部维护了 unit 配置的一份缓存，不会主动感知磁盘文件的变化。
+
+## 编写自己的服务 unit
+
+```bash
+sudo nano /etc/systemd/system/my-app.service   # 新建 unit 文件
+sudo systemctl daemon-reload                    # 让 systemd 识别新文件
+sudo systemctl enable --now my-app              # 设置开机自启并立即启动
+```
+
+自定义的 unit 文件放在 `/etc/systemd/system/` 目录下，这也是判断某个服务是系统自带还是用户自行配置的一个直接依据——发行版包管理器安装的服务，unit 文件通常在 `/usr/lib/systemd/system/` 目录下。

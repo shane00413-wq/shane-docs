@@ -1,0 +1,56 @@
+---
+title: "包管理器：APT 与 dpkg"
+description: "dpkg 与 apt 各自负责什么，软件源列表的作用，以及安装、更新、卸载软件包的常用命令。"
+sidebar:
+  order: 7
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Debian 系发行版(包括 Ubuntu)的软件安装和管理,依赖两个配合工作的工具:底层的 `dpkg` 和上层的 `apt`。理解两者的分工,是理解"为什么装软件要先 update"这类日常操作背后逻辑的基础。
+
+## dpkg:处理单个软件包的底层工具
+
+`dpkg`(Debian Package)直接操作 `.deb` 格式的软件包文件,负责解包、把文件复制到系统对应位置、注册软件包的安装记录。它的操作范围局限在"这一个包文件"本身,不负责联网下载,也不会自动处理这个包所依赖的其他软件包。
+
+```bash
+dpkg -i package.deb      # 安装一个本地的 .deb 包文件
+dpkg -r package-name     # 卸载一个已安装的包
+dpkg -l                  # 列出所有已安装的包
+```
+
+如果要安装的包依赖其他尚未安装的包,`dpkg -i` 会安装失败并报出缺失的依赖列表,需要手动逐个解决——这正是 `apt` 存在的意义。
+
+## apt:处理依赖关系与软件源的上层工具
+
+`apt`(Advanced Package Tool)构建在 `dpkg` 之上,额外负责两件 `dpkg` 不管的事:自动解析并安装依赖关系,以及从远程软件源下载包文件。日常使用中,`apt` 是主要的交互入口,`dpkg` 更多在需要处理本地 `.deb` 文件这类特殊场景下才会直接用到。
+
+```bash
+sudo apt update                # 同步软件源的最新包列表(不安装或升级任何软件)
+sudo apt upgrade               # 把已安装的包升级到软件源中的最新版本
+sudo apt install package-name  # 安装一个包及其全部依赖
+sudo apt remove package-name   # 卸载一个包,保留其配置文件
+sudo apt purge package-name    # 卸载一个包,同时删除其配置文件
+sudo apt autoremove            # 清理不再被任何已安装包依赖的孤立包
+```
+
+<Steps>
+1. `apt update` 只是从软件源服务器拉取最新的"包列表清单"到本地缓存,让系统知道当前每个包的最新可用版本是什么——这一步不会改动系统上任何已安装的软件。
+2. `apt upgrade` 才是真正读取这份本地缓存的清单,对比本机已安装版本,把有新版本的包下载并替换升级。
+3. 因此 `apt update && apt install package-name` 是常见组合,先确保本地包列表是最新的,再安装,避免因为包列表过期而装到旧版本或者提示"找不到包"。
+</Steps>
+
+## 软件源:apt 从哪里知道有哪些包
+
+`apt` 能查到哪些包、装哪个版本,依据的是 `/etc/apt/sources.list` 文件(以及 `/etc/apt/sources.list.d/` 目录下的补充文件)里配置的软件源地址列表。每一行大致对应一个远程仓库地址加上适用的发行版代号,`apt update` 实际做的事,就是逐个访问这些地址,下载对应的包索引文件。
+
+<Aside type="tip" title="查看某个命令属于哪个包">
+如果不确定某个命令具体由哪个包提供,可以用 `apt-file search <命令名>`(需要先 `sudo apt install apt-file` 并执行一次 `apt-file update`),或者对已安装的包用 `dpkg -S <命令的绝对路径>` 反查其所属的包名。
+</Aside>
+
+## 常用查询命令
+
+```bash
+apt search keyword          # 按关键词搜索软件源中的包
+apt show package-name       # 查看某个包的详细信息(版本、依赖、简介)
+apt list --installed        # 列出所有已安装的包
+```

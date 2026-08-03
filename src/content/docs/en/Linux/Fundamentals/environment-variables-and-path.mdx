@@ -1,0 +1,62 @@
+---
+title: "Environment Variables and PATH"
+description: "What environment variables are, how the PATH variable determines whether a command can be run directly, and when files like .bashrc and .profile each get loaded."
+sidebar:
+  order: 8
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Environment variables are a set of key-value pairs maintained at the operating-system level, inherited by the current process and every child process it spawns. The shell itself, and every command run inside it, can read these variables for configuration — which is why the behavior of many command-line tools can be adjusted through environment variables.
+
+## Viewing and setting environment variables
+
+```bash
+echo $HOME              # view the value of a single environment variable
+env                      # list all environment variables in the current session
+export MY_VAR="value"    # set an environment variable, inheritable by child processes
+MY_VAR="value"           # without export, valid only in the current shell — child processes can't see it
+unset MY_VAR             # remove a previously set environment variable
+```
+
+`export` is the key word here: an assignment without `export` is just an ordinary shell variable, scoped to the current shell process. Adding `export` writes the variable into the environment table, after which it's readable by any child process this shell spawns — a script it runs, a program it calls, and so on.
+
+## PATH: how commands get found
+
+`PATH` is one of the environment variables encountered most directly — its value is a colon-separated list of directory paths:
+
+```bash
+echo $PATH
+# /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+```
+
+As covered in the shell basics section, when a command that isn't a built-in is entered, the shell searches the directories listed in `PATH`, in order, for a matching executable, and runs the first match it finds — it doesn't keep looking even if a later directory has another file with the same name. This explains two common situations:
+
+- **"It's installed, so why does it say command not found?"**: the program's executable isn't in any directory listed in `PATH`. Either add the directory containing it to `PATH`, or call it directly with its absolute path.
+- **"Two versions are installed, so why does it always run the old one?"**: an earlier directory in `PATH` contains an older executable with the same name, which gets matched first. Running `which <command-name>` shows which file's path would actually be executed.
+
+Temporarily adding a directory to `PATH` (appended to the end, keeping the existing directories):
+
+```bash
+export PATH="$PATH:/new/directory"
+```
+
+## Configuration files: where variables get set persistently
+
+A variable `export`ed directly in a terminal only lasts for that session — it's gone once the terminal is closed. To have it take effect every time a terminal opens, the `export` command needs to go into a configuration file the shell reads automatically at startup. For bash:
+
+- **`~/.bashrc`**: read when an interactive non-login shell starts — this is usually what's triggered by simply opening a new terminal window day to day
+- **`~/.profile`** (or `~/.bash_profile`, depending on the distribution): read when a login shell starts — for example, logging in over SSH, or the start of a graphical login session
+
+<Aside type="note" title="When unsure which file to edit, start with .bashrc">
+A terminal window opened in a desktop environment triggers the `.bashrc` load path in the vast majority of cases. If a variable set in `.profile` doesn't show up in a new terminal, it's usually because that terminal triggered `.bashrc`'s startup path rather than `.profile`'s. After editing, run `source ~/.bashrc` to have an already-open terminal pick up the new configuration immediately, without closing and reopening it.
+</Aside>
+
+## Common built-in environment variables
+
+| Variable | Purpose |
+| --- | --- |
+| `HOME` | the current user's home directory path |
+| `USER` | the currently logged-in username |
+| `SHELL` | the default shell path for the current login session |
+| `PWD` | the current working directory |
+| `LANG` | the system's language and locale setting |

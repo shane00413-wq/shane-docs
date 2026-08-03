@@ -1,0 +1,55 @@
+---
+title: "Pipes and Redirection"
+description: "What the standard input, standard output, and standard error streams are, and what the pipe operator | and redirection operators > , >> , and 2>&1 each do."
+sidebar:
+  order: 6
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Command-line programs are, by default, connected to three data streams. Understanding that these streams exist is the prerequisite for understanding pipes and redirection, the two core mechanisms built on top of them.
+
+## The three standard streams
+
+Every process run in a terminal opens three file descriptors by default:
+
+- **Standard input (stdin, file descriptor 0)**: the channel a program reads input from, connected to the keyboard by default
+- **Standard output (stdout, file descriptor 1)**: the channel a program writes normal results to, connected to the terminal screen by default
+- **Standard error (stderr, file descriptor 2)**: the channel a program writes error messages to, also connected to the terminal screen by default, but a stream entirely independent of stdout
+
+Even though stdout and stderr both show up in the same terminal window by default, which makes it easy to mistake them for the same thing, they are two independent streams — which is exactly why one can be redirected on its own without affecting the other.
+
+## Redirection: pointing a stream at a file
+
+```bash
+command > output.txt     # write stdout to a file, overwriting existing content
+command >> output.txt    # append stdout to a file, keeping existing content
+command 2> error.txt     # write stderr to a file
+command > out.txt 2>&1   # write stdout to a file, and redirect stderr to the same file
+command < input.txt      # feed a file's contents in as stdin
+```
+
+`2>&1` tends to cause confusion — it means "redirect file descriptor 2 (stderr) to wherever file descriptor 1 (stdout) currently points." Order matters: `> out.txt 2>&1` first points stdout at `out.txt`, then makes stderr follow stdout to that same destination, so both streams end up in `out.txt`. Written in reverse (`2>&1 > out.txt`), stderr first points to wherever stdout was pointing at that moment — the terminal screen — and only afterward does stdout get redirected to the file, so stdout ends up in the file while stderr still prints to the screen.
+
+<Aside type="note" title="/dev/null: where data goes to disappear">
+`/dev/null` is a special device file — anything written to it is simply discarded. `command > /dev/null 2>&1` is a common pattern meaning "discard all of this command's output, whether normal results or error messages," typically used in scripts that only care whether a command succeeded, not what it printed.
+</Aside>
+
+## Pipes: connecting one command's output to the next command's input
+
+```bash
+command1 | command2
+```
+
+The pipe operator `|` connects `command1`'s stdout directly to `command2`'s stdin, with no intermediate file involved. This lets several single-purpose commands be composed into more complex processing pipelines — a direct expression of the Unix philosophy that each program should do one thing well, and complex tasks should be handled by combining several of them.
+
+A common real-world example:
+
+```bash
+ps aux | grep nginx | wc -l
+```
+
+This runs in sequence: `ps aux` lists all processes → the output is piped to `grep nginx`, which keeps only lines containing "nginx" → that result is piped to `wc -l`, which counts the lines. Each command has a single, narrow responsibility, and chaining them together via pipes accomplishes the composite task of "counting how many running processes are nginx-related."
+
+## How pipes and redirection relate
+
+A pipe moves stdout from one command to another; redirection changes where a stream is pointed. The two can be combined in the same command — `command1 | command2 > output.txt`, for example, means `command1`'s output is processed by `command2`, and the final result is written to a file instead of shown on screen. Understanding the scope each one operates in is the basis for reading more complex command-line combinations.

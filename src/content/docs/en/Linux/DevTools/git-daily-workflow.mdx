@@ -1,0 +1,63 @@
+---
+title: "Git Daily Workflow"
+description: "The everyday usage of add, status, commit, and log, what a branch actually is under the hood, and the basics of creating, switching, and merging branches."
+sidebar:
+  order: 2
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+With the repository, working directory, and staging area model in place, this section focuses on the group of commands used most often day to day: recording changes, viewing history, and working with branches.
+
+## Initializing and checking status
+
+```bash
+git init                 # turn the current directory into a Git repository
+git status                # check the current state of the working directory and staging area
+```
+
+`git status` is one of the most frequently run commands — it lists which files have been modified, which are already staged, and which are new files Git isn't tracking yet. It's the basic way to confirm the current state before doing anything else.
+
+## Recording a change
+
+<Steps>
+1. `git add <file>`: stage the current changes in a specific file; `git add .` stages every change in the current directory at once
+2. `git diff`: view the specific changes in the working directory relative to the staging area (or the staging area relative to the last commit) — a way to confirm the scope of a change before staging it
+3. `git commit -m "commit message"`: write the staged content into the repository, creating a new commit
+</Steps>
+
+The commit message isn't a throwaway comment — it's part of the permanent history. Tracing when and why a particular change was introduced relies mainly on these messages, so it's worth writing something concise but specific about what the change actually does, rather than a vague "update" or "fix."
+
+## Viewing history
+
+```bash
+git log                  # view commit history, newest first
+git log --oneline        # collapse each commit to one line, showing just the hash prefix and message
+git log -p               # show the specific changes (diff) for each commit
+```
+
+## Branches: parallel sequences of commits
+
+A branch is, at its core, just a movable pointer to a commit — not a complete, independent copy of the files. Creating a new branch is nearly free, because it only creates a new pointer without copying any file content — which is why Git's branching is noticeably lighter-weight than in many other version control tools.
+
+```bash
+git branch                    # list all current branches
+git branch new-feature        # create a new branch without switching to it
+git checkout new-feature      # switch to the given branch
+git checkout -b new-feature   # create and immediately switch to a new branch (combines the two commands above)
+git switch new-feature        # a newer, more purpose-specific command for switching branches
+```
+
+`HEAD` is a special internal pointer Git uses to mark "where things currently are." Normally it points at the current branch, and the current branch's pointer in turn points at that branch's latest commit. Switching branches is, under the hood, just moving `HEAD` to point at a different branch.
+
+## Merging branches
+
+```bash
+git checkout main        # switch back to the target branch first (usually main)
+git merge new-feature    # merge new-feature's commits into the current branch
+```
+
+If two branches modify the same part of the same file differently, `git merge` can't automatically decide which change to keep, producing a merge conflict. Git marks each side's version in the conflicting file with special markers (`<<<<<<<`, `=======`, `>>>>>>>`), and the file needs to be edited by hand to settle on a final version, then re-`git add`ed and `git commit`ed to complete the merge.
+
+<Aside type="tip" title="Check history with git log before merging">
+Before merging, `git log --oneline --graph --all` shows the commit relationships across every branch in a graphical form — a way to anticipate a likely conflict ahead of time, which is more efficient than diagnosing one after a merge has already gone wrong.
+</Aside>

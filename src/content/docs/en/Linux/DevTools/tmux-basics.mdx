@@ -1,0 +1,55 @@
+---
+title: "Getting Started with tmux"
+description: "The core problem tmux solves — decoupling a session from the terminal window viewing it — and the session, window, and pane structure along with the common keybindings for each."
+sidebar:
+  order: 7
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Running a long task on a remote server over SSH comes with a risk: if the network drops or the terminal window gets closed, the running program is usually terminated along with it. tmux (Terminal Multiplexer) exists to solve exactly this problem — it decouples a "running terminal session" from the "terminal window currently used to view it." The session itself keeps running independently in the background, and it keeps going even after the terminal window disconnects, ready to be reconnected to later.
+
+## Installation
+
+```bash
+sudo apt install tmux
+```
+
+## Sessions: tmux's core concept
+
+A session is an independent environment inside tmux, holding every command run within it, along with the state of any programs currently running. Its key property is that its lifetime doesn't depend on any particular terminal window — closing the terminal that started it, or losing the SSH connection, doesn't end the session as long as the tmux server itself is still running (typically continuously, on a remote server). The session can be reconnected to and inspected later.
+
+```bash
+tmux new -s work        # create a new session named work
+tmux ls                  # list all current sessions
+tmux attach -t work      # reattach to the session named work
+tmux kill-session -t work # terminate a given session
+```
+
+<Steps>
+1. Log into a remote server over SSH and run `tmux new -s work` to create a new session
+2. Start a long-running task inside it (a large data-processing job, for example)
+3. Press the prefix key (`Ctrl+b` by default), release it, then press `d` to detach from the current session — this doesn't close the session; the task keeps running inside it
+4. Disconnect from SSH, close the terminal — neither affects the task still running inside the session
+5. Log back into the server later and run `tmux attach -t work` to return to the same session, with its execution state and output fully intact
+</Steps>
+
+## The prefix key: the entry point for every tmux keybinding
+
+Every tmux keybinding requires pressing the prefix key first (`Ctrl+b` by default), releasing it, and then pressing the actual key — the two aren't pressed together. This design avoids conflicting with the shell's own keybindings, or those of a program currently running in a pane — only after the prefix key is pressed does tmux treat the next keypress as a command meant for itself; otherwise, it's passed straight through to whatever's running in the current pane.
+
+## Windows and panes: further subdivisions within a session
+
+A session can be further divided into multiple windows (similar to tabs in a browser — only one is shown at a time), and each window can be further divided into multiple panes (multiple terminal areas shown side by side on the same screen):
+
+| Action | Keybinding (prefix key first) |
+| --- | --- |
+| Create a new window | `c` |
+| Switch to the next/previous window | `n` / `p` |
+| Split a new pane vertically | `%` |
+| Split a new pane horizontally | `"` |
+| Move between panes | arrow keys |
+| Close the current pane | `x` |
+
+<Aside type="tip" title="Windows and panes aren't required to get value from tmux">
+If the only need is "keep a remote task running after disconnecting," the three basic session operations — create, detach, reattach — are already enough. Windows and panes are more advanced features, useful when monitoring several tasks at once or viewing multiple output streams side by side within the same session — there's no need to memorize all of it right away.
+</Aside>

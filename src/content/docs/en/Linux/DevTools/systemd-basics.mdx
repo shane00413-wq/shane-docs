@@ -1,0 +1,60 @@
+---
+title: "systemd and Service Management Basics"
+description: "systemd's role as the init system, the basic structure of a unit file, and the common systemctl commands for starting, stopping, and enabling a service at boot."
+sidebar:
+  order: 9
+---
+import { Aside } from '@astrojs/starlight/components';
+
+After the kernel finishes initializing at boot, the first user-space process started is called the init process (always PID 1), responsible for starting the various background services the system needs and deciding, according to its configuration, whether to restart a service if it exits unexpectedly. systemd is the init system implementation used by the vast majority of mainstream distributions today, and `systemctl` is the main command-line tool for interacting with it.
+
+## Units: the basic thing systemd manages
+
+systemd refers to everything it manages as a unit — a service (`.service`) is just the most common type; other types include mount points (`.mount`) and timers (`.timer`). A service unit's configuration file roughly looks like this:
+
+```ini
+[Unit]
+Description=My Application
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/my-app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- The `[Unit]` section describes information about the unit itself, along with which other units it depends on (`After` means "start after the given unit," not a hard dependency — a hard dependency needs `Requires`)
+- The `[Service]` section describes the actual startup command and restart behavior on unexpected exit, along with other runtime details
+- The `[Install]` section describes which startup target this unit should be tied to when it's enabled
+
+## Common systemctl commands
+
+```bash
+sudo systemctl start nginx      # start the service immediately
+sudo systemctl stop nginx        # stop the service immediately
+sudo systemctl restart nginx     # restart the service
+sudo systemctl status nginx      # check the service's current state and recent log output
+sudo systemctl enable nginx      # set it to start automatically at boot (doesn't start it now)
+sudo systemctl disable nginx     # remove it from automatic startup at boot
+sudo systemctl enable --now nginx # enable at boot and start it immediately
+```
+
+<Aside type="note" title="start/stop and enable/disable are two independent dimensions">
+`start`/`stop` control whether a service is running right now; `enable`/`disable` control whether it gets started automatically at boot — the two don't affect each other. A service can be "currently running, but not set to start at boot," and, just as validly, "set to start at boot, but currently stopped manually." When troubleshooting "a service didn't come back after rebooting the server," the first thing to confirm is whether `enable` was ever run.
+</Aside>
+
+## Reloading after a configuration change
+
+After editing a service's own configuration file (not its unit file), most services need `systemctl restart` for the change to take effect. If the unit file itself was edited instead (changing the startup arguments in `ExecStart`, for example), `sudo systemctl daemon-reload` needs to run first, telling systemd to re-read the unit file's contents from disk — otherwise the change has no effect, because systemd keeps an internal cache of unit configuration and doesn't automatically notice changes to the file on disk.
+
+## Writing a custom service unit
+
+```bash
+sudo nano /etc/systemd/system/my-app.service   # create the unit file
+sudo systemctl daemon-reload                    # let systemd pick up the new file
+sudo systemctl enable --now my-app              # enable at boot and start it immediately
+```
+
+Custom unit files live under `/etc/systemd/system/`, which also serves as a direct way to tell whether a given service came with the distribution or was configured manually — services installed by the distribution's package manager typically have their unit files under `/usr/lib/systemd/system/`.

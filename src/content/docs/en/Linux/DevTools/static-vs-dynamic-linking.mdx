@@ -1,0 +1,44 @@
+---
+title: "Static vs. Dynamic Linking"
+description: "The core difference between static and dynamic libraries in when and how they get linked, why dynamic libraries save disk space and memory, and what the ldd command is for."
+sidebar:
+  order: 5
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The previous section covered how the linking stage combines object files with the libraries they depend on. Libraries themselves come in two forms — static and dynamic — and the two differ entirely in when and how they end up linked into the final program, which is the root of their respective tradeoffs.
+
+## Static libraries: bundled in wholesale at compile time
+
+A static library (typically a `.a` file on Linux) is essentially a bundle of object files packaged together. When linking against a static library, the linker copies the portion of code actually used from it directly into the final executable being produced.
+
+This means the resulting executable is fully self-contained — the static library file itself doesn't need to exist at runtime, since the code it needed has already been copied in. The tradeoff is a noticeably larger executable, and if multiple programs on the same machine all statically link the same library, that code gets duplicated on disk and in memory across each of them rather than being shared.
+
+## Dynamic libraries: loaded on demand at runtime
+
+A dynamic library (typically a `.so`, or Shared Object, file on Linux) doesn't get its code copied into the executable at link time — instead, the executable just records reference information: which dynamic library needs to be loaded at runtime, and which symbols (function/variable names) from it are needed. The actual code loading happens the moment the program starts running, handled by the operating system's dynamic linker, which locates the corresponding `.so` file and maps the needed code into the program's memory space.
+
+This brings two direct benefits: the executable is noticeably smaller, since the library's code isn't copied in; and if the same dynamic library is depended on by multiple programs running at once, the operating system can let them share a single in-memory copy of that code instead of each holding its own separate copy.
+
+## The tradeoffs between the two
+
+| Dimension | Static linking | Dynamic linking |
+| --- | --- | --- |
+| When linking happens | At compile/build time | When the program starts |
+| Executable size | Larger (includes library code) | Smaller (only reference info) |
+| Distributing dependencies | No extra library files to distribute | Must ensure a matching version of the library exists in the runtime environment |
+| Updating a library | Requires recompiling the whole program | Just replace the .so file — no recompile needed |
+
+The update advantage of dynamic linking comes with a matching risk: if the runtime environment is missing a dynamic library, or has a version that doesn't match what the program was compiled against, the program fails outright at startup, unable to find the expected symbols. This class of problem is commonly called "dependency hell," and it's a category of issue that shows up far more often with dynamic linking than with static linking.
+
+## Checking which dynamic libraries an executable depends on
+
+```bash
+ldd /usr/bin/some-program
+```
+
+`ldd` lists every dynamic library a program depends on at runtime, along with whether the system can actually locate the corresponding file. If a line shows `=> not found`, the program is missing that dependency and will very likely fail to start — this is a common first step when troubleshooting a program that "installed fine but won't open."
+
+<Aside type="tip" title="Software installed via a package manager defaults to dynamic linking">
+The vast majority of software installed via `apt install` is dynamically linked, with its dependencies existing as separate packages (typically prefixed with `lib`). When installing the main program, `apt` automatically resolves and installs these dependency packages as well — one of the most direct applications of the package manager's "automatic dependency resolution" capability covered earlier.
+</Aside>

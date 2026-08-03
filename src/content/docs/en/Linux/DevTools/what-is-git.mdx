@@ -1,0 +1,54 @@
+---
+title: "Version Control Basics: What Git Is"
+description: "The core problem version control solves, how Git differs from traditional centralized tools, and what the repository, working directory, staging area, and commit each mean."
+sidebar:
+  order: 1
+---
+import { Aside, FileTree } from '@astrojs/starlight/components';
+
+A version control system (VCS) records every change made to a set of files over time, and allows freely viewing and switching between any historical version. Git is the most widely used version control tool today, and understanding its basic model is the prerequisite for every Git command that follows.
+
+## Centralized vs. distributed
+
+Earlier version control tools (like SVN) used a centralized model: a single central server holds the complete history, and each developer's local machine keeps only the currently checked-out version. Nearly every operation — committing, viewing history — requires network access to the central server.
+
+Git uses a distributed model: cloning a repository gives a full local copy that includes the complete history, not just a slice of one version. This means committing, viewing history, and creating branches can all be done fully offline — a network connection to the remote repository is only needed when syncing changes with others, via pushing or pulling.
+
+## Three working areas
+
+In a project managed by Git, files actually move through three distinct areas:
+
+<FileTree>
+- Working Directory the files directly visible and editable right now
+- Staging Area (Index) changes marked and ready to be recorded by the next commit
+- Repository changes that have already been formally committed and are part of the history
+</FileTree>
+
+For a change to actually be recorded by Git, it goes through three steps: modify a file in the working directory → add it to the staging area with `git add` → write it from the staging area into the repository with `git commit`. The staging area lets a developer precisely choose which changes go into a given commit, rather than being forced to commit every change currently in the working directory at once.
+
+## Commits: immutable snapshots of history
+
+Every time `git commit` runs, Git packages the current contents of the staging area into a commit object, recording the full snapshot of the change, the commit message, the author, a timestamp, and a reference to the previous commit. This chain of references links every commit into a single history — the basis for Git being able to trace back to any earlier version.
+
+Each commit has a unique hash computed from its content (like `a3f5c9e`), and that hash is itself the commit's identity — different content always produces a different hash, which is what Git uses to determine whether two commits point to the same content.
+
+<Aside type="note" title="Commits are immutable">
+Once a commit is created, the content it records is never modified afterward. What's often described as "amending the last commit" (`git commit --amend`) actually creates a new commit object and replaces the old reference with it, rather than truly modifying the data inside the original commit.
+</Aside>
+
+## Installation and basic configuration
+
+Installing Git on Debian-family distributions:
+
+```bash
+sudo apt install git
+```
+
+Before using it for the first time, identity information needs to be configured — it gets recorded into every commit made afterward:
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
+`--global` applies this configuration to every Git repository on the machine; omitting it applies the setting only to the repository currently being worked in — useful for using different identities across different projects.

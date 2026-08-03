@@ -1,0 +1,48 @@
+---
+title: "Archiving and Compression: tar and gzip"
+description: "Why .tar.gz is really two separate steps combined, what problems archiving and compression each solve, and what the common tar flag combinations mean."
+sidebar:
+  order: 8
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Extensions like `.tar.gz` and `.tgz` are often thought of as a single thing, but they're actually the result of two separate steps run in sequence: archiving with `tar`, then compression with `gzip`. Understanding what each step actually does removes a lot of the need to just memorize flag combinations.
+
+## Archiving: combining multiple files into one
+
+`tar` (Tape Archive) was originally built for tape backups. Its core function is bundling multiple files and directories into a single file while preserving the original directory structure, permissions, and other metadata. This step by itself has nothing to do with compression — a `.tar` file's size is roughly the sum of the original files' sizes; it's just turned "many files" into "one file," which is more convenient to transfer and manage.
+
+```bash
+tar -cf archive.tar dir/     # bundle the dir directory into archive.tar, no compression
+tar -xf archive.tar          # extract archive.tar
+tar -tf archive.tar          # list the files inside the archive without extracting
+```
+
+## Compression: shrinking the archive
+
+Compression is an optional step that comes after archiving. `gzip` is one of the most common compression tools on Linux, shrinking file size through a specific algorithm. `tar` has built-in support for several common compression algorithms, so there's no need to run `tar` and `gzip` as two separate commands:
+
+```bash
+tar -czf archive.tar.gz dir/    # bundle and compress with gzip (c=create, z=gzip, f=specify filename)
+tar -xzf archive.tar.gz          # decompress and extract (x=extract, z=gzip, f=specify filename)
+tar -cjf archive.tar.bz2 dir/    # bundle and compress with bzip2 (usually higher ratio, slower)
+tar -cJf archive.tar.xz dir/     # bundle and compress with xz (even higher ratio)
+```
+
+`-z`, `-j`, and `-J` correspond to the gzip, bzip2, and xz compression algorithms respectively, each with its own tradeoff between compression ratio and speed: gzip is fast but only moderately effective, xz compresses more but takes longer, and bzip2 falls somewhere in between. `.tar.gz` is the most common everyday choice, balancing speed and broad compatibility.
+
+<Aside type="note" title="A way to remember the common flags">
+`c` (create), `x` (extract), and `t` (list) are mutually exclusive modes — only one is used per command. `z`/`j`/`J` specify the compression algorithm, and compressing and decompressing need to use the flag for the same algorithm. `f` is followed immediately by the filename, a required argument that's usually placed last in the flag combination.
+</Aside>
+
+## An easy point of confusion: what gets compressed
+
+`gzip` used on its own (not through `tar`) can only compress a single file — it can't compress a directory directly, which is exactly why handling a directory usually means archiving it into a single file with `tar` first, then compressing that one file. Running `gzip` directly on a directory results in an error, not a compressed bundle of the whole directory.
+
+## Checking how much space compression actually saved
+
+```bash
+ls -lh archive.tar archive.tar.gz
+```
+
+Comparing file sizes before and after gives a direct sense of how effective the chosen algorithm is for that particular data — text-based files (source code, logs) typically compress well, while files already in a compressed format (images, video) gain very little from being compressed again, and can even end up slightly larger due to the compression format's own overhead.

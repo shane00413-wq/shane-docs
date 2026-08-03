@@ -1,0 +1,65 @@
+---
+title: "Viewing Logs with journalctl"
+description: "How journald's centralized logging differs from traditional text log files, and the common ways to filter journalctl output by service, by time, or follow it live."
+sidebar:
+  order: 10
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The services managed by systemd, covered in the previous section, don't write their logs to separate text files by default — instead, they're handed off to systemd's logging component, journald, for centralized collection. `journalctl` is the command-line tool for viewing those logs.
+
+## How centralized logging differs from traditional log files
+
+Traditionally, Linux service logs were each written to their own text file under `/var/log/` (`/var/log/nginx/error.log`, for example), with the format left up to each service and viewing or filtering handled differently for every one. journald unifies this layer: logs from different services are recorded in a structured, unified binary format (stored under `/var/log/journal/` or `/run/log/journal/`, depending on whether persistent storage is configured), each tagged with consistent metadata — timestamp, source service, log level, and so on — filterable and viewable through a single set of commands, without needing to remember a separate log path and format for every service.
+
+<Aside type="note" title="journald isn't meant to fully replace traditional log files">
+Many services (nginx, for instance) still write to their own text log files by default for compatibility reasons. What journald collects is a separate, system-level record — the two coexist without conflicting.
+</Aside>
+
+## Basic viewing
+
+```bash
+journalctl                    # view all logs, oldest first
+journalctl -r                 # reverse order, newest first
+journalctl -e                 # jump directly to the end of the log (the most recent entries)
+```
+
+## Filtering by service
+
+```bash
+journalctl -u nginx           # view only logs produced by nginx.service
+journalctl -u nginx -u ssh    # view logs from multiple services at once
+```
+
+The `-u` flag specifies a unit name, and is the most commonly used filter when tracking down a problem with a specific service — the log snippet shown by `systemctl status`, mentioned earlier, is essentially a trimmed-down version of this same command.
+
+## Filtering by time
+
+```bash
+journalctl --since "2026-08-01"                  # view logs from a given date onward
+journalctl --since "1 hour ago"                  # relative time expressions are supported
+journalctl --since "09:00" --until "10:00"       # view logs within a specific time window
+```
+
+## Following in real time: like tail -f
+
+```bash
+journalctl -f                 # stream new log entries in real time, like tail -f
+journalctl -u nginx -f        # follow a specific service's log in real time
+```
+
+`-f` is used often when observing what a service is doing right now — confirming it started cleanly after a restart, or watching errors appear live while reproducing a problem. The command holds the current terminal until stopped with `Ctrl+C`.
+
+## Disk usage and log cleanup
+
+journald's logs accumulate continuously by default, and a long-running server may need to keep an eye on the disk space they use:
+
+```bash
+journalctl --disk-usage           # check how much disk space current logs are using
+sudo journalctl --vacuum-time=7d  # clean up logs older than 7 days
+sudo journalctl --vacuum-size=500M # clean up logs until total usage is under 500M
+```
+
+<Aside type="tip" title="Filtering by log level">
+`journalctl -p err` shows only entries at the error level or more severe. The levels `-p` accepts are `emerg`, `alert`, `crit`, `err`, `warning`, `notice`, `info`, and `debug`, with lower numeric priority meaning more severe. When troubleshooting, starting the filter at a higher severity level narrows down what needs manual review considerably.
+</Aside>

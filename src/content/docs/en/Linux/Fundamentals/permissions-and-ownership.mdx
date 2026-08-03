@@ -1,0 +1,55 @@
+---
+title: "File Permissions and Ownership"
+description: "The three groups of three permission bits on a Linux file, how chmod and chown are used in practice, and how umask determines the default permissions of new files."
+sidebar:
+  order: 5
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Linux follows the traditional Unix permission model: every file and directory carries two kinds of information at once — who owns it (a user and a group), and which operations are granted to each of several identity categories. This model is the foundation for later topics such as root privileges and the identity a service runs as.
+
+## The three-groups-of-three-bits notation
+
+Running `ls -l` shows a string like `-rwxr-xr--` at the far left of a file's details, which breaks down into four parts:
+
+```
+-   rwx   r-x   r--
+type  owner  group  others
+```
+
+The first character indicates the file type (`-` for a regular file, `d` for a directory, `l` for a symbolic link). Each following group of three characters corresponds to the permissions held by one of three identity categories — owner, group, and others — and within each group the fixed order is `r` (read), `w` (write), `x` (execute), with `-` marking the absence of that permission.
+
+For directories, the meaning of these bits shifts slightly: `r` controls whether the directory's contents can be listed, `w` controls whether files can be created or removed inside it, and `x` controls whether the directory can be entered (i.e., accessed as part of a path).
+
+## Representing permissions as numbers: octal notation
+
+`r`, `w`, and `x` correspond to the values 4, 2, and 1 respectively, and summing the three within a group gives a single digit for that group — `rwx` = 7, `r-x` = 5, `r--` = 4, for example. So `rwxr-xr--` can be written as `754`, with the three digits corresponding to owner, group, and others in order. This notation is used extensively with `chmod`.
+
+## Changing permissions: chmod
+
+```bash
+chmod 644 file.txt      # owner: read/write; group and others: read only
+chmod 755 script.sh     # owner: read/write/execute; group and others: read and execute
+chmod +x script.sh      # add execute permission for all identities, on top of the existing set
+chmod u+w,g-w file.txt  # symbolic form: add write for owner, remove write for group
+```
+
+Numeric notation (like `644`) directly overwrites the existing permission set with the given value; symbolic notation (like `+x`) applies an incremental change on top of what's already there. The two suit different situations — numeric notation when the full permission set needs to be set precisely, symbolic notation when only a single bit needs adjusting.
+
+## Changing ownership: chown
+
+```bash
+chown newowner file.txt          # change the file's owner
+chown newowner:newgroup file.txt # change both owner and group at once
+chown -R newowner dir/           # recursively change ownership of a directory and its contents
+```
+
+A regular user can, by default, only change permissions (`chmod`) on files they own. Changing a file's owner (`chown`) usually requires root, since it involves transferring ownership of a resource to another user — an action a regular user has no authority to carry out unilaterally.
+
+## Where a new file's default permissions come from: umask
+
+Newly created files and directories don't get arbitrary permissions — they're computed by taking the system's full permission ceiling (666 for files, meaning no execute bit; 777 for directories) and subtracting the current session's `umask` value. Running `umask` shows the current value; a common default of `022` means new files get `666-022=644` and new directories get `777-022=755` — which is also why newly created files have no execute permission by default and need an explicit `chmod +x`.
+
+<Aside type="caution" title="Avoid reaching for 777 or a recursive chmod -R">
+When a permission error shows up, running `chmod 777` or recursively granting full permissions across a whole directory can look like it "fixes" the problem, but it actually opens the file up to full read/write/execute access for every user — a clear security liability. A safer approach is to check the current permissions and owner with `ls -l` first, pinpoint which bit and which identity is actually the problem, and make the smallest change that addresses it.
+</Aside>

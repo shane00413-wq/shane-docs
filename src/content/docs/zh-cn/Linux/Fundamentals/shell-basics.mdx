@@ -1,0 +1,45 @@
+---
+title: "Shell 基础"
+description: "终端、Shell 和命令之间的关系，登录后进入的提示符具体在做什么，以及 bash 与 zsh 这类 Shell 程序的区别。"
+sidebar:
+  order: 3
+---
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+命令行相关的讨论里，"终端"（Terminal）、"Shell"、"命令"（Command）这几个词经常被混用，但它们指的是三个不同层面的东西。厘清这三者的关系，是理解命令行为什么会有这些行为的前提。
+
+## 终端、Shell 与命令的分工
+
+**终端（Terminal Emulator）** 是一个图形界面程序，负责显示文本、接收键盘输入，本质上只是一个"输入输出的窗口"，不负责解释输入的内容是什么意思。常见的终端程序有 GNOME Terminal、Konsole、iTerm2 等。
+
+**Shell** 是运行在终端里的一个程序，负责读取用户输入的文本、解析成具体的操作指令、执行、再把结果输出回终端显示。真正"理解命令"的是 Shell，不是终端本身——同一个终端程序，可以运行不同的 Shell。
+
+**命令（Command）** 是用户输入给 Shell 的一行指令，可能是 Shell 内置的功能（如 `cd`），也可能是磁盘上的一个独立可执行程序（如 `ls`），Shell 负责判断具体是哪一种并做相应处理。
+
+## 常见的 Shell 程序
+
+<Tabs>
+	<TabItem label="bash">
+		Bourne Again SHell，绝大多数 Linux 发行版的默认 Shell，历史悠久，脚本语法是事实上的行业标准。学习 Linux 命令行，bash 是最值得优先掌握的一个。
+	</TabItem>
+	<TabItem label="zsh">
+		Z Shell，语法上和 bash 高度兼容，同时提供了更强的自动补全、拼写纠错、插件生态（如 Oh My Zsh），是许多开发者的日常首选，macOS 自 Catalina 起也已将其设为默认 Shell。
+	</TabItem>
+	<TabItem label="sh">
+		POSIX 标准定义的最小化 Shell 规范，很多系统脚本（尤其是发行版自带的初始化脚本）出于兼容性考虑会显式声明用 `sh` 而不是 `bash` 执行，语法是 bash 的一个子集。
+	</TabItem>
+</Tabs>
+
+## 提示符背后发生的事情
+
+打开终端时看到的 `user@hostname:~$` 这类文本叫提示符（Prompt），它本身不是系统固定生成的，而是由环境变量 `PS1` 定义的格式化字符串，可以自定义显示内容（当前路径、Git 分支状态、执行耗时等都是通过修改 `PS1` 实现的）。每次显示提示符，都代表 Shell 已经处理完上一条命令，正在等待下一次输入。
+
+一次完整的命令执行大致经过这几步：Shell 读取输入的文本 → 判断是内置命令还是外部程序 → 如果是外部程序，在 `PATH` 环境变量指定的目录列表里依次查找对应的可执行文件 → 创建一个子进程执行它 → 等待子进程结束，将其输出显示在终端，并把提示符重新显示出来等待下一次输入。
+
+<Aside type="note" title="查看当前使用的是哪个 Shell">
+执行 `echo $SHELL` 可以查看当前登录会话默认使用的 Shell 路径；执行 `echo $0` 则显示当前这个 Shell 进程本身实际在跑的程序名，两者在某些切换过 Shell 的场景下可能不一致。
+</Aside>
+
+## 交互式与非交互式
+
+Shell 有交互式（Interactive）和非交互式（Non-interactive）两种运行模式。手动打开终端、逐条输入命令，属于交互式；执行一个脚本文件（如 `bash script.sh`），脚本内部的命令按顺序自动执行、不等待用户输入，属于非交互式。两种模式加载的配置文件也不同——这也是为什么有些环境变量在终端里手动设置能生效，写进脚本执行时却读取不到，具体的配置文件加载顺序会在后续关于环境变量的内容中展开。

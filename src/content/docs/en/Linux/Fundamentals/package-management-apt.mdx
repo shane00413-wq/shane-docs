@@ -1,0 +1,56 @@
+---
+title: "Package Management with APT"
+description: "What dpkg and apt are each responsible for, what a repository source list does, and the common commands for installing, updating, and removing packages."
+sidebar:
+  order: 7
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Software installation and management on Debian-family distributions (including Ubuntu) relies on two tools working together: `dpkg` at the low level, and `apt` above it. Understanding how the two divide responsibilities is the basis for understanding the logic behind everyday habits like "run update before installing anything."
+
+## dpkg: the low-level tool for a single package
+
+`dpkg` (Debian Package) operates directly on `.deb` package files — unpacking them, copying files to the right locations on the system, and recording the installation. Its scope is limited to that one package file: it doesn't fetch anything over the network, and it doesn't automatically resolve packages that the one being installed depends on.
+
+```bash
+dpkg -i package.deb      # install a local .deb package file
+dpkg -r package-name     # remove an installed package
+dpkg -l                  # list all installed packages
+```
+
+If the package being installed depends on other packages that aren't yet installed, `dpkg -i` fails and reports the missing dependencies, which then have to be resolved manually one by one — which is exactly the problem `apt` exists to solve.
+
+## apt: the higher-level tool for dependencies and repositories
+
+`apt` (Advanced Package Tool) is built on top of `dpkg` and additionally handles two things `dpkg` doesn't: automatically resolving and installing dependencies, and downloading package files from remote repositories. In everyday use, `apt` is the main entry point — `dpkg` is mostly reached for directly in special cases, such as handling a local `.deb` file.
+
+```bash
+sudo apt update                # sync the local package list with the repository (installs or upgrades nothing)
+sudo apt upgrade               # upgrade installed packages to the latest version available in the repository
+sudo apt install package-name  # install a package along with all of its dependencies
+sudo apt remove package-name   # remove a package, keeping its configuration files
+sudo apt purge package-name    # remove a package, including its configuration files
+sudo apt autoremove            # clean up orphaned packages no longer required by anything installed
+```
+
+<Steps>
+1. `apt update` only pulls the latest package listing from the repository servers into the local cache, so the system knows what the current latest available version of each package is — this step doesn't change any software already installed.
+2. `apt upgrade` is what actually reads that local cached listing, compares it against what's installed, and downloads and upgrades any package with a newer version available.
+3. `apt update && apt install package-name` is therefore a common combination — it ensures the local package listing is current before installing, avoiding a stale listing that results in an outdated version being installed, or a "package not found" error.
+</Steps>
+
+## Repositories: where apt learns what packages exist
+
+What packages `apt` can find, and which versions, comes from the list of repository addresses configured in `/etc/apt/sources.list` (and supplementary files under `/etc/apt/sources.list.d/`). Each line roughly corresponds to a remote repository address plus the distribution codename it applies to. What `apt update` actually does is visit each of these addresses in turn and download the corresponding package index files.
+
+<Aside type="tip" title="Finding which package provides a command">
+If it's unclear which package provides a given command, `apt-file search <command-name>` can help (after `sudo apt install apt-file` and running `apt-file update` once), or for an already-installed package, `dpkg -S <absolute path to the command>` looks up which package owns that file.
+</Aside>
+
+## Common query commands
+
+```bash
+apt search keyword          # search the repository's packages by keyword
+apt show package-name       # show detailed info for a package (version, dependencies, description)
+apt list --installed        # list all installed packages
+```

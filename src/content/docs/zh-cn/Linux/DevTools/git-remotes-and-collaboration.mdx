@@ -1,0 +1,53 @@
+---
+title: "远程仓库与 Git 协作"
+description: "clone、push、pull、fetch 这几个操作分别在做什么，本地分支与远程跟踪分支的关系，以及协作中常见的冲突处理思路。"
+sidebar:
+  order: 3
+---
+import { Aside } from '@astrojs/starlight/components';
+
+前两节讲的操作都发生在单台机器的本地仓库内。多人协作、或者需要跨设备同步同一份代码时，需要引入远程仓库（Remote Repository）的概念——托管在别处（通常是 GitHub、GitLab 这类平台，或者自建的服务器）的另一份仓库，本地仓库和它之间通过网络同步提交记录。
+
+## 克隆一个已有仓库
+
+```bash
+git clone https://github.com/user/repo.git
+```
+
+克隆操作会把远程仓库的完整历史下载到本地，同时自动把这个远程地址记录为一个名叫 `origin` 的远程仓库引用——这是约定俗成的默认命名，不是强制规则。
+
+```bash
+git remote -v             # 查看当前仓库配置的所有远程地址
+git remote add upstream https://github.com/other/repo.git   # 额外添加一个远程仓库引用
+```
+
+## push 与 pull:同步的两个方向
+
+```bash
+git push origin main      # 把本地 main 分支的新提交推送到远程仓库的 main 分支
+git pull origin main      # 把远程仓库 main 分支的新提交拉取下来,合并进本地当前分支
+```
+
+`git pull` 实际上是两步操作的组合：先执行 `git fetch`（把远程的最新提交下载到本地，但不改动本地分支），再执行 `git merge`（把刚下载下来的远程提交合并进当前分支）。这也是为什么单独执行 `git fetch` 之后，本地文件不会发生变化——下载和合并是两个独立的动作，`pull` 只是把它们打包成了一步。
+
+## 本地分支与远程跟踪分支
+
+克隆或者拉取之后，本地实际上存在两类相关但不同的分支引用：本地分支（如 `main`）本身可以自由提交、切换；远程跟踪分支（如 `origin/main`）则是本地对"远程仓库该分支目前状态"的一份只读记录，只有执行 `fetch` 或 `pull` 才会更新，不会随本地提交自动变化。
+
+`git status` 里常见的"当前分支领先/落后远程分支 N 个提交"这类提示，比较的正是本地分支和其对应的远程跟踪分支之间的差异，而不是直接连接远程仓库实时比对。
+
+## 推送被拒绝时该怎么办
+
+```
+! [rejected]        main -> main (fetch first)
+```
+
+这个提示的含义是：远程仓库上 `main` 分支已经有本地不知道的新提交（可能是其他协作者推送的），本地历史和远程历史出现了分叉，Git 拒绝直接推送以避免覆盖这些提交。正确的处理顺序是先 `git pull` 把远程的新提交同步下来、在本地完成合并（必要时解决冲突），再重新执行 `git push`。
+
+<Aside type="caution" title="避免使用 --force 覆盖远程历史">
+`git push --force` 会强制用本地历史覆盖远程分支,不管远程上是否存在本地未同步到的提交,这类提交会被直接丢弃且难以恢复。团队协作场景下,只有在完全清楚自己在做什么(例如清理个人分支上的临时提交)时才应该使用,共享分支(如 `main`)上应当避免。
+</Aside>
+
+## fork 与 Pull Request:平台层面的协作模式
+
+GitHub、GitLab 这类平台在 Git 本身之上，额外提供了 Fork（把别人的仓库复制一份到自己账号下）和 Pull Request / Merge Request（提出"把我 fork 里的某些提交合并进原仓库"的请求，供原仓库维护者审查）这两个概念。这两者是平台提供的协作机制，不是 Git 本身的功能——Git 命令层面，Fork 出来的仓库和普通的远程仓库没有本质区别。

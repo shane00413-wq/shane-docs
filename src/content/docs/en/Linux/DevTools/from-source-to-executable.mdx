@@ -1,0 +1,41 @@
+---
+title: "From Source to Executable"
+description: "Using C as an example, the specific process by which source code becomes an executable through preprocessing, compilation, assembly, and linking, and which tools the gcc command actually invokes along the way."
+sidebar:
+  order: 4
+---
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Running `gcc hello.c -o hello` produces a program that can be run directly, and the process looks like a single step — but `gcc` is really just a unified front-end command that calls four independent tool stages in sequence behind the scenes. Understanding these four stages makes it much easier to see exactly where a compilation error or a linker error is actually coming from.
+
+## Overview of the four stages
+
+<Steps>
+1. **Preprocessing**: handles preprocessor directives in the source code that start with `#` — expanding an `#include`d header file's contents in place, or substituting a `#define`d macro with its value. The output at this stage is still text-based code, just with all preprocessor directives resolved
+2. **Compilation**: translates the preprocessed code into assembly — an intermediate representation tightly coupled to the specific CPU architecture, but still human-readable
+3. **Assembly**: translates the assembly code into an object file (a `.o` file), containing machine code that still can't be run directly — references to external functions and variables inside it are still placeholders, not yet filled in with actual addresses
+4. **Linking**: combines one or more object files together with the library files they depend on, resolves and fills in the actual addresses for every cross-file function and variable reference, and produces the final, directly runnable executable
+</Steps>
+
+## Inspecting the intermediate output at each stage
+
+```bash
+gcc -E hello.c -o hello.i     # preprocessing only, output the expanded source
+gcc -S hello.i -o hello.s     # compilation only, output assembly code
+gcc -c hello.s -o hello.o     # assembly only, output an object file
+gcc hello.o -o hello          # linking only, output the final executable
+```
+
+Running `gcc hello.c -o hello` directly is equivalent to automatically running all four steps in sequence, without keeping the intermediate output on disk. Running each stage separately is mainly useful for pinpointing which stage a given problem is actually happening at — a "syntax error," for instance, usually happens during compilation, while an "undefined reference" error happens during the final linking stage, and the two call for entirely different fixes.
+
+## What a header file is for: declaration, not implementation
+
+A header file (a `.h` file) pulled in via `#include` typically contains only declarations of functions and variables — stating that a function exists, along with its parameter and return types — rather than their definitions, the actual code that runs inside the function body. The preprocessing stage simply inserts these declarations verbatim into the source, letting the compiler know "this function genuinely exists, and calls to it can be accepted for now." The actual implementation lives in a separate source file, compiled into its own object file, and the two only get connected during the final linking stage.
+
+<Aside type="note" title="Linker errors usually mean a declaration has no matching implementation">
+If a function has only a declaration (in a header, or a prototype written earlier in the current file) but no matching implementation can be found anywhere, compilation succeeds without complaint — the compiler only needs to know the declaration exists — but linking fails with an "undefined reference to" error, because the linker searched every object file and library involved and never found the function's actual implementation.
+</Aside>
+
+## Why understanding this pipeline is worth the effort
+
+Build tools encountered later (Make, covered in the next section), the difference between static and dynamic libraries, and topics like cross-platform compilation are all, at their core, further organization and optimization layered on top of these four stages. Without a grasp of this underlying pipeline, it's easy to get stuck at "something errored and I don't know where to even start looking."

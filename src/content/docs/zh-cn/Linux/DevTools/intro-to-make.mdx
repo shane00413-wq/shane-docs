@@ -1,0 +1,59 @@
+---
+title: "Make 与构建自动化入门"
+description: "Makefile 的基本语法结构，规则、目标、依赖、命令这几个概念的关系，以及 Make 如何通过时间戳判断哪些文件需要重新构建。"
+sidebar:
+  order: 6
+---
+import { Aside, FileTree } from '@astrojs/starlight/components';
+
+前面提到，把源码变成可执行文件要经过预处理、编译、汇编、链接四个阶段。项目稍微复杂一点，源文件数量变多，每次改动之后手动重复输入这些命令会变得非常繁琐，而且容易漏掉某个该重新编译的文件。Make 是解决这类问题的经典构建自动化工具。
+
+## Makefile 的基本结构
+
+Make 的行为由一个名为 `Makefile` 的文件定义，其中每一条规则（Rule）遵循固定的结构：
+
+```makefile
+target: dependencies
+	command
+```
+
+- **目标（Target）**：这条规则最终要生成的文件名，或者一个用来触发操作、本身不对应实际文件的名字（称为伪目标）
+- **依赖（Dependencies）**：生成这个目标之前，需要先确保已经存在或已经是最新状态的文件列表
+- **命令（Command）**：生成目标实际要执行的 Shell 命令
+
+<Aside type="caution" title="命令前必须是 Tab,不能是空格">
+Makefile 里命令行开头的缩进,语法上要求必须是一个 Tab 字符,用空格缩进会直接报错(`missing separator`)。这是 Makefile 语法里最容易踩坑的一点,尤其是在文本编辑器默认把 Tab 自动转换成空格的情况下。
+</Aside>
+
+## 一个具体例子
+
+```makefile
+hello: hello.o
+	gcc hello.o -o hello
+
+hello.o: hello.c
+	gcc -c hello.c -o hello.o
+
+clean:
+	rm -f hello hello.o
+```
+
+这份 Makefile 定义了三条规则：生成 `hello` 依赖 `hello.o`，生成 `hello.o` 依赖 `hello.c`。执行 `make`（不带参数时默认执行第一条规则对应的目标）时，Make 会顺着依赖关系往前追溯，发现 `hello` 依赖 `hello.o`、`hello.o` 又依赖 `hello.c`，于是按正确的先后顺序依次执行对应的命令，直到生成最终目标。
+
+`clean` 这条规则不对应任何实际要生成的文件，纯粹是为了执行"删除构建产物"这个操作而存在，这类规则称为伪目标，执行方式是显式指定目标名：`make clean`。
+
+## 增量构建:只重新处理变化过的部分
+
+Make 判断是否需要重新执行某条规则的依据是文件的修改时间戳：只有当依赖文件的修改时间比目标文件更新（或者目标文件根本不存在）时，对应的命令才会被执行；如果目标文件已经比它的所有依赖都新，说明目标已经是最新状态，Make 会跳过这条规则，不重复执行。
+
+这意味着只改动了 `hello.c` 之后重新执行 `make`，Make 会发现 `hello.c` 比 `hello.o` 新，于是重新执行编译生成新的 `hello.o`，进而发现新的 `hello.o` 又比 `hello` 新，于是重新执行链接——但如果这次改动的是一个和 `hello` 完全无关的其他文件,相关规则不会被触发,避免了不必要的重复编译。项目文件越多，这种增量构建带来的时间节省就越明显。
+
+## 常用内置变量
+
+<FileTree>
+- $@ 当前规则的目标名
+- $< 当前规则依赖列表中的第一个文件
+- $^ 当前规则依赖列表中的全部文件
+</FileTree>
+
+利用这几个变量，前面的 Makefile 可以写得更简洁：`hello.o: hello.c` 这条规则的命令可以写成 `gcc -c $< -o $@`，不需要重复输入具体的文件名，减少改动文件名时需要同步修改多处的麻烦。

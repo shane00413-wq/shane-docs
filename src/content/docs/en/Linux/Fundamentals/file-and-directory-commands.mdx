@@ -1,0 +1,82 @@
+---
+title: "File and Directory Commands"
+description: "The core commands for viewing, creating, copying, moving, and deleting files and directories, plus the basics of using find to locate files."
+sidebar:
+  order: 4
+---
+import { Aside } from '@astrojs/starlight/components';
+
+File and directory operations make up the largest share of everyday command-line use. This section covers the core usage of `ls`, `cd`, `mkdir`, `cp`, `mv`, `rm`, and `find` — all included by default on Debian-family distributions, with nothing extra to install.
+
+## Listing directory contents: ls
+
+```bash
+ls              # list the current directory's contents
+ls -l           # detailed info: permissions, owner, size, modified time
+ls -a           # include hidden files (those starting with .)
+ls -lh          # detailed info, with sizes in human-readable units (K/M/G)
+ls -lt          # sort by modified time, newest first
+```
+
+Flags like `-l`, `-a`, and `-h` can be combined — `ls -lah`, for example, is equivalent to enabling all three at once.
+
+## Changing directories: cd
+
+```bash
+cd /path/to/dir   # switch to an absolute path
+cd relative/dir   # switch to a path relative to the current directory
+cd ~              # switch to the current user's home directory
+cd -              # switch back to the previous directory
+cd ..             # switch to the parent directory
+```
+
+## Creating directories: mkdir
+
+```bash
+mkdir new-dir             # create a single directory
+mkdir -p a/b/c            # create nested directories, creating parents as needed
+```
+
+Without `-p`, the command fails if any parent directory (`a`, `a/b` in the example) doesn't already exist.
+
+## Copying files and directories: cp
+
+```bash
+cp source.txt target.txt      # copy a file
+cp -r source-dir target-dir   # recursively copy an entire directory
+cp -i source.txt target.txt   # prompt before overwriting an existing target
+```
+
+Copying a directory requires `-r` (recursive) — without it, the command fails with an error saying the target is a directory.
+
+## Moving and renaming: mv
+
+```bash
+mv old-name.txt new-name.txt   # rename (moving within the same directory is equivalent to renaming)
+mv file.txt /path/to/dir/      # move a file into a target directory
+```
+
+There's no separate rename command — renaming is, under the hood, just "moving to a new filename in the same directory."
+
+## Deleting files and directories: rm
+
+```bash
+rm file.txt        # delete a file
+rm -r dir/          # recursively delete a directory and its contents
+rm -rf dir/         # recursive delete without confirmation prompts (force)
+```
+
+<Aside type="danger" title="rm has no recycle bin">
+Files deleted with `rm` don't go into anything like a GUI recycle bin — there's no standard way to recover them afterward. The `-rf` combination deserves particular caution: `-r` deletes subdirectories recursively, and `-f` skips every confirmation prompt. Before running the two together, it's worth running the command without `-f` first to confirm the scope, or checking the path with `ls` beforehand.
+</Aside>
+
+## Locating files: find
+
+```bash
+find . -name "*.txt"           # search by filename in the current directory and subdirectories
+find /path -type d             # match only directories (-type f matches only files)
+find . -mtime -1               # find files modified within the last day
+find . -size +10M              # find files larger than 10MB
+```
+
+`find` supports combining criteria across name, type, size, and modified time — the overall structure of the command is "where to search + what to filter by," and multiple filters can be stacked together. By comparison, the `locate` command is faster, but relies on a pre-built index database and won't reflect files created after the index was last updated. The two suit different situations: `find` is the better fit whenever precise, real-time results matter.
