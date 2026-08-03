@@ -54,10 +54,10 @@ DKMS can be configured to sign modules after build by adding a `post_install` sc
 ## 6 Troubleshooting
 
 <Steps>
-- If a module is rejected, check `dmesg | grep -i 'sig'` and `journalctl -k` for signature errors.
-- Confirm the MOK was enrolled successfully in firmware.
-- Ensure the `sign-file` path is correct for your headers package; on Ubuntu it is usually under `/usr/src/linux-headers-$(uname -r)/scripts/`.
-- If you cannot enroll MOK (headless servers), consider using a remote KVM or temporarily disabling Secure Boot to install necessary drivers, then re-enable after signing.
+1. If a module is rejected, check `dmesg | grep -i 'sig'` and `journalctl -k` for signature errors.
+2. Confirm the MOK was enrolled successfully in firmware.
+3. Ensure the `sign-file` path is correct for your headers package; on Ubuntu it is usually under `/usr/src/linux-headers-$(uname -r)/scripts/`.
+4. If you cannot enroll MOK (headless servers), consider using a remote KVM or temporarily disabling Secure Boot to install necessary drivers, then re-enable after signing.
 </Steps>
 
 <Aside type="note" title="Security reminder">

@@ -74,12 +74,12 @@ sudo dhclient wlan0
 ## 5 排错清单
 
 <Steps>
-- 检查 rfkill：`rfkill list all` — 用 `sudo rfkill unblock all` 解除阻塞。
-- 内核消息：`dmesg | grep -i firmware`。
-- 接口状态：`ip link`、`iw dev`、`nmcli device status`。
-- 日志：`journalctl -u NetworkManager -n 200`。
-- 使用 Live USB 启动并测试以排除当前安装问题。
-- 若内核更新后模块不匹配，确保安装了 `linux-headers-$(uname -r)` 并重新运行 DKMS 构建。
+1. 检查 rfkill：`rfkill list all` — 用 `sudo rfkill unblock all` 解除阻塞。
+2. 内核消息：`dmesg | grep -i firmware`。
+3. 接口状态：`ip link`、`iw dev`、`nmcli device status`。
+4. 日志：`journalctl -u NetworkManager -n 200`。
+5. 使用 Live USB 启动并测试以排除当前安装问题。
+6. 若内核更新后模块不匹配，确保安装了 `linux-headers-$(uname -r)` 并重新运行 DKMS 构建。
 </Steps>
 
 <Aside type="note" title="尽量使用发行版软件包">

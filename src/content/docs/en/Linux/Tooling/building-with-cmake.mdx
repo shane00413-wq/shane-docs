@@ -33,11 +33,28 @@ cmake --build .
 - `-DCMAKE_C_FLAGS="-Wall -Wextra"` to surface warnings
 
 <Steps>
-- Prefer `Ninja` as the underlying backend for fast parallel builds: `cmake -G Ninja ..`.
-- Use `find_package` to locate dependencies (e.g., `find_package(PkgConfig REQUIRED)` then use `pkg_check_modules`).
-- Keep tests in a `tests/` directory and use `enable_testing()` + `add_test()`.
+1. Prefer `Ninja` as the underlying backend for fast parallel builds: `cmake -G Ninja ..`.
+2. Use `find_package` to locate dependencies (e.g., `find_package(PkgConfig REQUIRED)` then use `pkg_check_modules`).
+3. Keep tests in a `tests/` directory and use `enable_testing()` + `add_test()`.
 </Steps>
 
 <Aside type="note" title="CMake version matters">
 Newer CMake versions add useful convenience functions and modern CMake patterns; if a distribution provides an older CMake, consider installing a newer release locally.
 </Aside>
+
+## Why this matters
+
+This topic is an important part of building a reliable Linux development workflow. Understanding it clearly will make later tasks easier, because it reduces guesswork and helps you recognize when a step is missing or misapplied.
+
+## Practical next steps
+
+- Try the commands or configuration shown here in a safe test environment.
+- Compare how the concepts apply across different distributions or tools.
+- Keep a short note of what worked and what failed so you can diagnose future problems faster.
+- Revisit the related article in the series to deepen the connections between topics.
+
+## Common pitfalls
+
+- Skipping verification steps and assuming the system is configured correctly.
+- Copying commands without adapting paths, package names, or tool versions for your environment.
+- Treating this topic as an isolated tip rather than part of a larger workflow.

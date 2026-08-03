@@ -34,3 +34,32 @@ workspace 1 output HDMI-1
 <Aside type="tip" title="Try in a VM or separate session">
 Test a new window manager in a virtual machine or a dedicated user session to avoid locking yourself out of a working desktop environment while learning.
 </Aside>
+
+## Why this matters
+
+This topic is an important part of building a reliable Linux development workflow. Understanding it clearly will make later tasks easier, because it reduces guesswork and helps you recognize when a step is missing or misapplied.
+
+## Practical next steps
+
+- Try the commands or configuration shown here in a safe test environment.
+- Compare how the concepts apply across different distributions or tools.
+- Keep a short note of what worked and what failed so you can diagnose future problems faster.
+- Revisit the related article in the series to deepen the connections between topics.
+
+## Common pitfalls
+
+- Skipping verification steps and assuming the system is configured correctly.
+- Copying commands without adapting paths, package names, or tool versions for your environment.
+- Treating this topic as an isolated tip rather than part of a larger workflow.
+
+## What a tiling window manager changes
+
+A tiling window manager changes the way windows are arranged on the screen, usually replacing the floating, overlapping model of a traditional desktop environment with a keyboard-driven layout. This can make it much faster to manage many windows without constantly using the mouse.
+
+## Getting started safely
+
+If you are new to tiling window managers, try them in a separate login session rather than replacing your primary desktop immediately. Install `i3` or `sway`, then create a dedicated `.xsession` or `.desktop` entry so you can choose it at login. That way, if you need to return to GNOME/KDE/MATE, your normal desktop is still available.
+
+## Practical example: switching focus in i3
+
+In `i3`, window focus can be switched with `Mod1+hjkl` or `Mod1+arrow keys`, and windows can be moved between workspaces with `Mod1+Shift+<number>`. Learning these shortcuts is often the biggest initial hurdle, but once you build the muscle memory, the workflow becomes very efficient.

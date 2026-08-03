@@ -27,11 +27,11 @@ These packages provide a working toolchain for compiled languages (GCC/clang via
 ## Minimal configuration steps
 
 <Steps>
-- Install and configure `git` (name + email).
-- Create a local `~/projects` directory and choose a shell (`bash` or `zsh`).
-- Configure a basic `~/.gitconfig` with `credential.helper` and a sensible `core.editor`.
-- Create a small `~/.config/nvim/init.lua` to enable LSP and completion (see the Neovim article for details).
-- Create a `~/projects/example` workspace and test building a small C program with `gcc -o hello hello.c`.
+1. Install and configure `git` (name + email).
+2. Create a local `~/projects` directory and choose a shell (`bash` or `zsh`).
+3. Configure a basic `~/.gitconfig` with `credential.helper` and a sensible `core.editor`.
+4. Create a small `~/.config/nvim/init.lua` to enable LSP and completion (see the Neovim article for details).
+5. Create a `~/projects/example` workspace and test building a small C program with `gcc -o hello hello.c`.
 </Steps>
 
 ## Quick verification
@@ -49,3 +49,20 @@ When setting up a new machine, prefer scripted installs (shell scripts or dotfil
 ## Next steps
 
 With the core toolchain installed, proceed to learn compiling from source, working with `cmake`, and configuring Neovim for code navigation and debugging.
+
+## Why this matters
+
+This topic is an important part of building a reliable Linux development workflow. Understanding it clearly will make later tasks easier, because it reduces guesswork and helps you recognize when a step is missing or misapplied.
+
+## Practical next steps
+
+- Try the commands or configuration shown here in a safe test environment.
+- Compare how the concepts apply across different distributions or tools.
+- Keep a short note of what worked and what failed so you can diagnose future problems faster.
+- Revisit the related article in the series to deepen the connections between topics.
+
+## Common pitfalls
+
+- Skipping verification steps and assuming the system is configured correctly.
+- Copying commands without adapting paths, package names, or tool versions for your environment.
+- Treating this topic as an isolated tip rather than part of a larger workflow.

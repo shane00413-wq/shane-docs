@@ -54,10 +54,10 @@ modinfo yourmod | grep signer
 ## 6 排错要点
 
 <Steps>
-- 若模块被拒载，检查 `dmesg | grep -i 'sig'` 与 `journalctl -k` 的签名错误信息。
-- 确认 MOK 已在固件中成功注册。
-- 确认 `sign-file` 的路径对应该内核头包，通常位于 `/usr/src/linux-headers-$(uname -r)/scripts/`。
-- 如无法在无头服务器上完成 MOK 注册，考虑使用远程 KVM，或在受控窗口内临时关闭 Secure Boot 来安装并签名模块，随后重新启用。
+1. 若模块被拒载，检查 `dmesg | grep -i 'sig'` 与 `journalctl -k` 的签名错误信息。
+2. 确认 MOK 已在固件中成功注册。
+3. 确认 `sign-file` 的路径对应该内核头包，通常位于 `/usr/src/linux-headers-$(uname -r)/scripts/`。
+4. 如无法在无头服务器上完成 MOK 注册，考虑使用远程 KVM，或在受控窗口内临时关闭 Secure Boot 来安装并签名模块，随后重新启用。
 </Steps>
 
 <Aside type="note" title="安全提醒">

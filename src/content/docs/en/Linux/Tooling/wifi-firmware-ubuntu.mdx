@@ -74,12 +74,12 @@ sudo dhclient wlan0
 ## 5 Troubleshooting checklist
 
 <Steps>
-- Check rfkill: `rfkill list all` — unblock with `sudo rfkill unblock all`.
-- Kernel messages: `dmesg | grep -i firmware`.
-- Interface state: `ip link`, `iw dev`, `nmcli device status`.
-- Capture logs: `journalctl -u NetworkManager -n 200`.
-- Try a live kernel (booted from live USB) to exclude current installation issues.
-- If module mismatch after kernel update, ensure `linux-headers-$(uname -r)` is installed and re-run DKMS builds.
+1. Check rfkill: `rfkill list all` — unblock with `sudo rfkill unblock all`.
+2. Kernel messages: `dmesg | grep -i firmware`.
+3. Interface state: `ip link`, `iw dev`, `nmcli device status`.
+4. Capture logs: `journalctl -u NetworkManager -n 200`.
+5. Try a live kernel (booted from live USB) to exclude current installation issues.
+6. If module mismatch after kernel update, ensure `linux-headers-$(uname -r)` is installed and re-run DKMS builds.
 </Steps>
 
 <Aside type="note" title="Avoid random third-party drivers">

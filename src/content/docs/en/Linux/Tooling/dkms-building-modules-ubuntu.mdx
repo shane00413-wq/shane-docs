@@ -83,10 +83,10 @@ sudo dkms remove -m yourmod -v 1.0 --all
 ## 4 Troubleshooting DKMS builds
 
 <Steps>
-- View build logs: `/var/lib/dkms/<module>/<version>/build/make.log`.
-- Ensure matching `linux-headers-$(uname -r)` are installed.
-- If a DKMS build fails after a kernel update, manually run `dkms build` to see errors and fix missing symbols or API changes.
-- Use `dkms status` to list installed modules and their build state.
+1. View build logs: `/var/lib/dkms/<module>/<version>/build/make.log`.
+2. Ensure matching `linux-headers-$(uname -r)` are installed.
+3. If a DKMS build fails after a kernel update, manually run `dkms build` to see errors and fix missing symbols or API changes.
+4. Use `dkms status` to list installed modules and their build state.
 </Steps>
 
 <Aside type="note" title="Production caution">

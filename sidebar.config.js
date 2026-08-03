@@ -71,6 +71,19 @@ export default [
         "translations": {
           "zh-cn": "开发工具"
         }
+      },
+      {
+        "label": "Network",
+        "items": [
+          {
+            "autogenerate": {
+              "directory": "Linux/Network"
+            }
+          }
+        ],
+        "translations": {
+          "zh-cn": "网络"
+        }
       }
     ],
     "translations": {

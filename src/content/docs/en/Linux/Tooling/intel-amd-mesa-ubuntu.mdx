@@ -44,9 +44,9 @@ To revert, remove the PPA and `sudo apt update && sudo apt install ppa-purge && 
 ## 4 Troubleshooting
 
 <Steps>
-- If you see `llvmpipe`, check kernel DRM driver and DRI modules (`lsmod | grep drm` and `dmesg | grep -i drm`).
-- Ensure `xserver-xorg-video-*` packages are not conflicting; modern stacks prefer DRI via Mesa.
-- For Wayland compositors, check compositor logs (e.g., `journalctl -b` for GNOME/Wayland messages).
+1. If you see `llvmpipe`, check kernel DRM driver and DRI modules (`lsmod | grep drm` and `dmesg | grep -i drm`).
+2. Ensure `xserver-xorg-video-*` packages are not conflicting; modern stacks prefer DRI via Mesa.
+3. For Wayland compositors, check compositor logs (e.g., `journalctl -b` for GNOME/Wayland messages).
 </Steps>
 
 <Aside type="note" title="Diagnostic cards">
@@ -55,3 +55,20 @@ To revert, remove the PPA and `sudo apt update && sudo apt install ppa-purge && 
     <Card title="Driver info" description="Use `lspci -k` to see kernel modules in use."/>
   </CardGrid>
 </Aside>
+
+## Why this matters
+
+This topic is an important part of building a reliable Linux development workflow. Understanding it clearly will make later tasks easier, because it reduces guesswork and helps you recognize when a step is missing or misapplied.
+
+## Practical next steps
+
+- Try the commands or configuration shown here in a safe test environment.
+- Compare how the concepts apply across different distributions or tools.
+- Keep a short note of what worked and what failed so you can diagnose future problems faster.
+- Revisit the related article in the series to deepen the connections between topics.
+
+## Common pitfalls
+
+- Skipping verification steps and assuming the system is configured correctly.
+- Copying commands without adapting paths, package names, or tool versions for your environment.
+- Treating this topic as an isolated tip rather than part of a larger workflow.

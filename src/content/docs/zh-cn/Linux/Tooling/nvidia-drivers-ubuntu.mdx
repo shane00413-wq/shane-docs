@@ -69,12 +69,12 @@ sudo mokutil --import /root/MOK.pem
 若 `nvidia-smi` 报错或无设备：
 
 <Steps>
-- 查看内核日志：`dmesg | grep -i nvidia` 与 `journalctl -k | tail`。
-- 在 `/var/lib/dkms/<module>/<version>/build/make.log` 查找 DKMS 编译日志。
-- 确认 nouveau 未阻塞：`lsmod | grep nouveau`。若存在，创建 `/etc/modprobe.d/blacklist-nouveau.conf`，写入 `blacklist nouveau` 和 `options nouveau modeset=0`，然后 `sudo update-initramfs -u` 并重启。
-- 用 `lspci -k` 查看 VGA 设备使用的驱动。
-- 若为模块签名错误，请检查 MOK 注册或手动签名模块（参见 Secure Boot 文章）。
-- 若 X/Wayland 启动失败，检查 `/var/log/Xorg.0.log` 与 `journalctl -b` 的 compositor/显示管理器日志。
+1. 查看内核日志：`dmesg | grep -i nvidia` 与 `journalctl -k | tail`。
+2. 在 `/var/lib/dkms/<module>/<version>/build/make.log` 查找 DKMS 编译日志。
+3. 确认 nouveau 未阻塞：`lsmod | grep nouveau`。若存在，创建 `/etc/modprobe.d/blacklist-nouveau.conf`，写入 `blacklist nouveau` 和 `options nouveau modeset=0`，然后 `sudo update-initramfs -u` 并重启。
+4. 用 `lspci -k` 查看 VGA 设备使用的驱动。
+5. 若为模块签名错误，请检查 MOK 注册或手动签名模块（参见 Secure Boot 文章）。
+6. 若 X/Wayland 启动失败，检查 `/var/log/Xorg.0.log` 与 `journalctl -b` 的 compositor/显示管理器日志。
 </Steps>
 
 <Aside type="note" title="回退到开源驱动">

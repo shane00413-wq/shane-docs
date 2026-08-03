@@ -1,4 +1,7 @@
 Android:Android>Huawei|华为:HUAWEI
 CLI Tools|CLI 工具:cli
 Linux Development|Linux 开发:Linux>Fundamentals|基础入门:Fundamentals
+Linux Development|Linux 开发:Linux>Environment|环境配置:Environment
+Linux Development|Linux 开发:Linux>Tooling|工具链:Tooling
 Linux Development|Linux 开发:Linux>Dev Tools|开发工具:DevTools
+Linux Development|Linux 开发:Linux>Network|网络:Network

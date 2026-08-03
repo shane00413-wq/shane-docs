@@ -121,12 +121,12 @@ ping -c2 8.8.8.8
 ## Troubleshooting steps (practical checklist)
 
 <Steps>
-- Verify link: `cat /sys/class/net/eth0/operstate` and `ethtool eth0`.
-- Check driver/kernel messages: `dmesg | grep -i eth0` and `sudo journalctl -k`.
-- Confirm IP and routes: `ip addr`, `ip route`.
-- Test connectivity: `ping`, `traceroute`, and `curl --interface eth0 https://ifconfig.co`.
-- Capture packets for analysis: `sudo tcpdump -i eth0 -n -s 0 -w /tmp/cap.pcap`.
-- Check for NetworkManager interfering when using `systemd-networkd` (or vice versa) — ensure only one manager controls the interface.
+1. Verify link: `cat /sys/class/net/eth0/operstate` and `ethtool eth0`.
+2. Check driver/kernel messages: `dmesg | grep -i eth0` and `sudo journalctl -k`.
+3. Confirm IP and routes: `ip addr`, `ip route`.
+4. Test connectivity: `ping`, `traceroute`, and `curl --interface eth0 https://ifconfig.co`.
+5. Capture packets for analysis: `sudo tcpdump -i eth0 -n -s 0 -w /tmp/cap.pcap`.
+6. Check for NetworkManager interfering when using `systemd-networkd` (or vice versa) — ensure only one manager controls the interface.
 </Steps>
 
 <Aside type="note" title="Persisting configuration">

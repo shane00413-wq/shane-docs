@@ -83,10 +83,10 @@ sudo dkms remove -m yourmod -v 1.0 --all
 ## 4 DKMS 构建排错
 
 <Steps>
-- 查看构建日志：`/var/lib/dkms/<module>/<version>/build/make.log`。
-- 确保已安装匹配的 `linux-headers-$(uname -r)`。
-- 若内核升级后 DKMS 构建失败，手动运行 `dkms build` 查看错误，并修复缺失符号或 API 变更。
-- 使用 `dkms status` 列出已安装模块及其状态。
+1. 查看构建日志：`/var/lib/dkms/<module>/<version>/build/make.log`。
+2. 确保已安装匹配的 `linux-headers-$(uname -r)`。
+3. 若内核升级后 DKMS 构建失败，手动运行 `dkms build` 查看错误，并修复缺失符号或 API 变更。
+4. 使用 `dkms status` 列出已安装模块及其状态。
 </Steps>
 
 <Aside type="note" title="生产注意事项">

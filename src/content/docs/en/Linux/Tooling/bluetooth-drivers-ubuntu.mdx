@@ -44,12 +44,29 @@ connect <MAC>
 ## 4 Troubleshooting
 
 <Steps>
-- Check rfkill: `rfkill list all` — unblock if soft/ hard blocked.
-- Check `journalctl -u bluetooth -n 200` for daemon errors.
-- For missing firmware, `dmesg | grep -i bluetooth` often shows filename; install `linux-firmware` package or vendor firmware.
-- If pairing fails, try removing device (`remove <MAC>`) and re-pair.
+1. Check rfkill: `rfkill list all` — unblock if soft/ hard blocked.
+2. Check `journalctl -u bluetooth -n 200` for daemon errors.
+3. For missing firmware, `dmesg | grep -i bluetooth` often shows filename; install `linux-firmware` package or vendor firmware.
+4. If pairing fails, try removing device (`remove <MAC>`) and re-pair.
 </Steps>
 
 <Aside type="note" title="Headless pairing">
 For headless devices (no display), use `bluetoothctl`'s pairing agent with PIN or `--legacy` flags as needed by device.
 </Aside>
+
+## Why this matters
+
+This topic is an important part of building a reliable Linux development workflow. Understanding it clearly will make later tasks easier, because it reduces guesswork and helps you recognize when a step is missing or misapplied.
+
+## Practical next steps
+
+- Try the commands or configuration shown here in a safe test environment.
+- Compare how the concepts apply across different distributions or tools.
+- Keep a short note of what worked and what failed so you can diagnose future problems faster.
+- Revisit the related article in the series to deepen the connections between topics.
+
+## Common pitfalls
+
+- Skipping verification steps and assuming the system is configured correctly.
+- Copying commands without adapting paths, package names, or tool versions for your environment.
+- Treating this topic as an isolated tip rather than part of a larger workflow.

@@ -53,3 +53,20 @@ This runs in sequence: `ps aux` lists all processes → the output is piped to `
 ## How pipes and redirection relate
 
 A pipe moves stdout from one command to another; redirection changes where a stream is pointed. The two can be combined in the same command — `command1 | command2 > output.txt`, for example, means `command1`'s output is processed by `command2`, and the final result is written to a file instead of shown on screen. Understanding the scope each one operates in is the basis for reading more complex command-line combinations.
+
+## Why this matters
+
+This topic is an important part of building a reliable Linux development workflow. Understanding it clearly will make later tasks easier, because it reduces guesswork and helps you recognize when a step is missing or misapplied.
+
+## Practical next steps
+
+- Try the commands or configuration shown here in a safe test environment.
+- Compare how the concepts apply across different distributions or tools.
+- Keep a short note of what worked and what failed so you can diagnose future problems faster.
+- Revisit the related article in the series to deepen the connections between topics.
+
+## Common pitfalls
+
+- Skipping verification steps and assuming the system is configured correctly.
+- Copying commands without adapting paths, package names, or tool versions for your environment.
+- Treating this topic as an isolated tip rather than part of a larger workflow.

@@ -72,12 +72,12 @@ Alternatively, disable Secure Boot in firmware settings (less recommended for se
 If `nvidia-smi` fails or shows no devices:
 
 <Steps>
-- Check kernel messages: `dmesg | grep -i nvidia` and `journalctl -k | tail`.
-- Check DKMS build logs in `/var/lib/dkms/<module>/<version>/build/make.log`.
-- Confirm nouveau is not blocking: `lsmod | grep nouveau`. If present, create `/etc/modprobe.d/blacklist-nouveau.conf` with `blacklist nouveau` and `options nouveau modeset=0`, then run `sudo update-initramfs -u` and reboot.
-- Check `lspci -k` to see which kernel driver is in use for the VGA device.
-- If module signing errors appear, review Secure Boot MOK enrollment or sign the module manually (see Secure Boot guide).
-- If X/Wayland fails, check `/var/log/Xorg.0.log` and `journalctl -b` for compositor messages.
+1. Check kernel messages: `dmesg | grep -i nvidia` and `journalctl -k | tail`.
+2. Check DKMS build logs in `/var/lib/dkms/<module>/<version>/build/make.log`.
+3. Confirm nouveau is not blocking: `lsmod | grep nouveau`. If present, create `/etc/modprobe.d/blacklist-nouveau.conf` with `blacklist nouveau` and `options nouveau modeset=0`, then run `sudo update-initramfs -u` and reboot.
+4. Check `lspci -k` to see which kernel driver is in use for the VGA device.
+5. If module signing errors appear, review Secure Boot MOK enrollment or sign the module manually (see Secure Boot guide).
+6. If X/Wayland fails, check `/var/log/Xorg.0.log` and `journalctl -b` for compositor messages.
 </Steps>
 
 <Aside type="note" title="Driver rollback">

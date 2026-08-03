@@ -41,3 +41,20 @@ Running `man hier` shows the current system's full description of the FHS direct
 ## Why this layout is worth memorizing
 
 Later work — installing software, configuring services, writing scripts — will almost inevitably touch this directory structure. Figuring out why a command "installed but won't run," for instance, often comes down to it having landed in a directory not covered by the `PATH` environment variable; figuring out why a service's configuration change had no effect often starts with confirming whether the correct configuration file, at the correct layer, was actually edited. Building an overall mental model of this hierarchy meaningfully cuts down on blind trial-and-error during later troubleshooting.
+
+## Why this matters
+
+This topic is an important part of building a reliable Linux development workflow. Understanding it clearly will make later tasks easier, because it reduces guesswork and helps you recognize when a step is missing or misapplied.
+
+## Practical next steps
+
+- Try the commands or configuration shown here in a safe test environment.
+- Compare how the concepts apply across different distributions or tools.
+- Keep a short note of what worked and what failed so you can diagnose future problems faster.
+- Revisit the related article in the series to deepen the connections between topics.
+
+## Common pitfalls
+
+- Skipping verification steps and assuming the system is configured correctly.
+- Copying commands without adapting paths, package names, or tool versions for your environment.
+- Treating this topic as an isolated tip rather than part of a larger workflow.

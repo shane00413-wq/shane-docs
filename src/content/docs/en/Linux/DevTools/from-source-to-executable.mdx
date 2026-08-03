@@ -39,3 +39,35 @@ If a function has only a declaration (in a header, or a prototype written earlie
 ## Why understanding this pipeline is worth the effort
 
 Build tools encountered later (Make, covered in the next section), the difference between static and dynamic libraries, and topics like cross-platform compilation are all, at their core, further organization and optimization layered on top of these four stages. Without a grasp of this underlying pipeline, it's easy to get stuck at "something errored and I don't know where to even start looking."
+
+## Why this matters
+
+This topic is an important part of building a reliable Linux development workflow. Understanding it clearly will make later tasks easier, because it reduces guesswork and helps you recognize when a step is missing or misapplied.
+
+## Practical next steps
+
+- Try the commands or configuration shown here in a safe test environment.
+- Compare how the concepts apply across different distributions or tools.
+- Keep a short note of what worked and what failed so you can diagnose future problems faster.
+- Revisit the related article in the series to deepen the connections between topics.
+
+## Common pitfalls
+
+- Skipping verification steps and assuming the system is configured correctly.
+- Copying commands without adapting paths, package names, or tool versions for your environment.
+- Treating this topic as an isolated tip rather than part of a larger workflow.
+
+## Inspecting intermediate files in practice
+
+A common diagnostic workflow is to stop the compiler at an intermediate stage and inspect the result. For example, if a syntax error is reported during compilation, run `gcc -E hello.c -o hello.i` and examine the expanded source to see whether macro expansion caused an unexpected token. If a linker error happens instead, inspect `hello.o` with `readelf -s hello.o` or compare object files with `nm` to verify that the expected symbols are actually present.
+
+## Typical compiler flags to help diagnose problems
+
+- `-Wall -Wextra` enables more warnings, catching potential bugs early.
+- `-g` keeps debug information in the object files, making runtime debugging possible.
+- `-O0` disables optimization while debugging, so line numbers and variable values are easier to follow.
+- `-fverbose-asm` can be used with `gcc -S` to include comments in assembly output.
+
+## Practical takeaway
+
+Understanding how source, assembly, object files, and linking fit together makes build failures much less mysterious. If you can map an error message to one of these four stages, you can choose the right fix instead of guessing.

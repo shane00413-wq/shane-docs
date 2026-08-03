@@ -128,9 +128,9 @@ When a bug is intermittent or performance-related, combine `perf record`/`perf r
 If gdb reports missing symbols, ensure you built with `-g` and did not strip the binary. Use `file` and `readelf -S ./myprog` to inspect symbol sections.
 
 <Steps>
-- Build with `-g -O0` for interactive debugging; use `-g -O2` for release with some symbol info retained.
-- Use `gdb --batch -ex 'run' -ex 'bt' --args ./myprog` in CI to capture backtraces for failing tests.
-- Save core dumps with `ulimit -c unlimited` when reproducing crashes locally.
+1. Build with `-g -O0` for interactive debugging; use `-g -O2` for release with some symbol info retained.
+2. Use `gdb --batch -ex 'run' -ex 'bt' --args ./myprog` in CI to capture backtraces for failing tests.
+3. Save core dumps with `ulimit -c unlimited` when reproducing crashes locally.
 </Steps>
 
 <Aside type="note" title="IDE and LSP integration">

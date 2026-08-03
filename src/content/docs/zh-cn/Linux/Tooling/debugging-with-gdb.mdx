@@ -128,9 +128,9 @@ gdb --batch -ex 'bt full' ./myprog core > core-backtrace.txt
 若 gdb 报告缺少符号，确认使用了 `-g` 编译且可执行文件未被 strip。用 `file` 和 `readelf -S ./myprog` 检查符号表与段信息。
 
 <Steps>
-- 交互式调试使用 `-g -O0`；发布构建可用 `-g -O2` 保留部分符号信息。
-- 在 CI 中使用 `gdb --batch -ex 'run' -ex 'bt' --args ./myprog` 捕获失败测试的回溯。
-- 重现崩溃时设 `ulimit -c unlimited` 保存 core dump 以便事后分析。
+1. 交互式调试使用 `-g -O0`；发布构建可用 `-g -O2` 保留部分符号信息。
+2. 在 CI 中使用 `gdb --batch -ex 'run' -ex 'bt' --args ./myprog` 捕获失败测试的回溯。
+3. 重现崩溃时设 `ulimit -c unlimited` 保存 core dump 以便事后分析。
 </Steps>
 
 <Aside type="note" title="IDE 与 LSP 集成">

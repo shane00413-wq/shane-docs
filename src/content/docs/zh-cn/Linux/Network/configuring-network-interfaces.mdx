@@ -121,12 +121,12 @@ ping -c2 8.8.8.8
 ## 排错清单（实用步骤）
 
 <Steps>
-- 验证链路：`cat /sys/class/net/eth0/operstate` 与 `ethtool eth0`。
-- 查看驱动/内核日志：`dmesg | grep -i eth0` 与 `sudo journalctl -k`。
-- 确认 IP 与路由：`ip addr`、`ip route`。
-- 测试连通性：`ping`、`traceroute`、`curl --interface eth0 https://ifconfig.co`。
-- 抓包分析：`sudo tcpdump -i eth0 -n -s 0 -w /tmp/cap.pcap`。
-- 检查 NetworkManager 与 systemd-networkd 是否冲突；仅用一个管理同一接口。
+1. 验证链路：`cat /sys/class/net/eth0/operstate` 与 `ethtool eth0`。
+2. 查看驱动/内核日志：`dmesg | grep -i eth0` 与 `sudo journalctl -k`。
+3. 确认 IP 与路由：`ip addr`、`ip route`。
+4. 测试连通性：`ping`、`traceroute`、`curl --interface eth0 https://ifconfig.co`。
+5. 抓包分析：`sudo tcpdump -i eth0 -n -s 0 -w /tmp/cap.pcap`。
+6. 检查 NetworkManager 与 systemd-networkd 是否冲突；仅用一个管理同一接口。
 </Steps>
 
 <Aside type="note" title="配置持久化">
